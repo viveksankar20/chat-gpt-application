@@ -1,46 +1,18 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { connectDB } from "@/lib/mongoose"
-import Message from "@/models/chat.model"
-import { ChatOpenAI } from "@langchain/openai"
-import { HumanMessage } from "@langchain/core/messages"
+import { openai } from "@ai-sdk/openai"
+import { streamText } from "ai"
 
-const model = new ChatOpenAI({
-  openAIApiKey: process.env.GROQ_API_KEY,
-  configuration: {
-    baseURL: "https://api.groq.com/openai/v1",
-  },
-  modelName: "llama3-8b-8192",
-})
+// Allow streaming responses up to 30 seconds
+export const maxDuration = 30
 
-export async function GET(req: NextRequest) {
-  try {
-    await connectDB()
+export async function POST(req: Request) {
+  const { messages } = await req.json()
 
-    const query = req.nextUrl.searchParams.get("query")
-    if (!query) {
-      return NextResponse.json({ message: "Please provide a query" }, { status: 400 })
-    }
+  const result = streamText({
+    model: openai("gpt-4o"),
+    messages,
+    system:
+      "You are a helpful AI assistant. Provide clear, accurate, and helpful responses. When providing code examples, use proper formatting and explain the code when helpful.",
+  })
 
-    const response = await model.call([new HumanMessage(query)])
-
-    // Save user message
-    await new Message({
-      query,
-      response: null,
-      content: query,
-    }).save()
-
-    // Save assistant response
-    await new Message({
-      query,
-      response: response.text,
-      content: response.text,
-    }).save()
-
-    const messages = await Message.find()
-    return NextResponse.json({ message: messages, success: true })
-  } catch (error) {
-    console.error("MongoDB connection error:", error)
-    return NextResponse.json({ error: "MongoDB connection failed" }, { status: 500 })
-  }
+  return result.toDataStreamResponse()
 }
