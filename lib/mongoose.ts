@@ -1,6 +1,6 @@
 import mongoose, { Mongoose } from "mongoose";
 
-const MONGO_URI = "mongodb://localhost:27017/chatgpt";
+const MONGO_URI = process.env.MONGO_URI;
 
 interface CachedMongoose {
   conn: Mongoose | null; // ✅ Fix: Mongoose instead of Connection
@@ -24,7 +24,7 @@ export async function connectDB() {
   if (cached && cached.conn) return cached.conn;
 
   if (!cached?.promise) {
-    cached!.promise = mongoose.connect(MONGO_URI, {
+    cached!.promise = mongoose.connect(MONGO_URI||"", {
       bufferCommands: false,
     });
   }
