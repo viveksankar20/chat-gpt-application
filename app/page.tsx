@@ -23,6 +23,13 @@ type Chat = {
   messages: Message[]
 }
 
+interface CodeProps {
+  inline?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  [key: string]: any; // For ...props
+}
+
 export default function Home() {
   const [chats, setChats] = useState<Chat[]>([])
   const [activeChat, setActiveChat] = useState<string | null>(null)
@@ -178,12 +185,11 @@ export default function Home() {
                     remarkPlugins={[remarkGfm]}
                     components={{
                       code({
-                        node,
                         inline,
                         className,
                         children,
                         ...props
-                      }: any) {
+                      }: CodeProps) {
                         const match = /language-(\w+)/.exec(className || "");
                         return !inline && match ? (
                           <SyntaxHighlighter style={atomDark} language={match[1]} PreTag="div" {...props}>
