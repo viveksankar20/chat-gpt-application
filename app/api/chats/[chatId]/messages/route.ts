@@ -6,21 +6,13 @@ import { HumanMessage, AIMessage, type BaseMessage } from "@langchain/core/messa
 import mongoose from "mongoose"
 import type { MessageResponse } from "@/types/chat"
 
-const model = new ChatOpenAI({
-  openAIApiKey: process.env.GROQ_API_KEY,
-  configuration: {
-    baseURL: "https://api.groq.com/openai/v1",
-  },
-  modelName: "llama3-8b-8192",
-})
-
 interface RouteParams {
   params: {
     chatId: string
   }
 }
 
-// GET messages for a specific chat
+// GET - Fetch messages for a specific chat
 export async function GET(req: NextRequest, { params }: RouteParams): Promise<NextResponse<MessageResponse>> {
   try {
     await connectDB()
@@ -67,7 +59,7 @@ export async function POST(req: NextRequest, { params }: RouteParams): Promise<N
       return NextResponse.json({ error: "Message content is required", success: false }, { status: 400 })
     }
 
-    // Check if chat exists
+    // Check if the chat exists
     const chat = await Chat.findById(chatId).lean<IChat>()
     if (!chat) {
       return NextResponse.json({ error: "Chat not found", success: false }, { status: 404 })
@@ -81,18 +73,32 @@ export async function POST(req: NextRequest, { params }: RouteParams): Promise<N
     })
     await userMessage.save()
 
-    // Get conversation history for context
+    // Get last 20 messages for context
     const previousMessages = await Message.find({ chatId }).sort({ createdAt: 1 }).limit(20).lean<IMessage[]>()
 
-    // Convert to LangChain message format
     const conversationHistory: BaseMessage[] = previousMessages.map((msg) =>
       msg.role === "user" ? new HumanMessage(msg.content) : new AIMessage(msg.content),
     )
 
-    // Get AI response
+    // ✅ Make sure GROQ_API_KEY is set
+    if (!process.env.GROQ_API_KEY) {
+      console.error("Missing GROQ_API_KEY in environment variables.")
+      return NextResponse.json({ error: "Missing AI configuration", success: false }, { status: 500 })
+    }
+
+    // Instantiate AI model inside the route
+    const model = new ChatOpenAI({
+      openAIApiKey: process.env.GROQ_API_KEY,
+      configuration: {
+        baseURL: "https://api.groq.com/openai/v1",
+      },
+      modelName: "llama3-8b-8192",
+    })
+
+    // Get response from model
     const response = await model.invoke(conversationHistory)
 
-    // Save assistant response
+    // Save assistant message
     const assistantMessage = new Message({
       chatId,
       role: "assistant",

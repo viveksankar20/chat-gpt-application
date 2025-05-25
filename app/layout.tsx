@@ -6,6 +6,8 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
+  preload: false,  // Disable fetching font at build time
+  fallback: ["system-ui", "sans-serif"], // fallback fonts to avoid flash
 });
 
 export const metadata: Metadata = {
