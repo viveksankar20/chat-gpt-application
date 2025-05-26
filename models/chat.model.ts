@@ -58,11 +58,10 @@ const MessageSchema = new Schema<IMessage>({
 })
 
 // Update chat's updatedAt when a new message is added
-MessageSchema.pre("save", async function (this: Document) {
+MessageSchema.pre("save", async function (this: IMessage) {
   if (this.isNew) {
     const ChatModel = mongoose.models.Chat as Model<IChat>
-    // @ts-ignore
-    await ChatModel.findByIdAndUpdate(this.get("chatId"), { updatedAt: new Date() })
+    await ChatModel.findByIdAndUpdate(this.chatId, { updatedAt: new Date() })
   }
 })
 
