@@ -21,6 +21,7 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content)
   const [copied, setCopied] = useState(false)
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
 
   const handleSave = () => {
     onEdit(message.id, editContent)
@@ -32,13 +33,23 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
     setIsEditing(false)
   }
 
-  const copyToClipboard = async () => {
+  const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(message.content)
+      await navigator.clipboard.writeText(text)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       console.error("Failed to copy text: ", err)
+    }
+  }
+
+  const copyCodeToClipboard = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopiedCode(code)
+      setTimeout(() => setCopiedCode(null), 2000)
+    } catch (err) {
+      console.error("Failed to copy code: ", err)
     }
   }
 
@@ -65,11 +76,11 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
             <div className="space-y-2">
               <Input value={editContent} onChange={(e) => setEditContent(e.target.value)} className="w-full" />
               <div className="flex space-x-2">
-                <Button size="sm" onClick={handleSave}>
+                <Button size="sm" onClick={handleSave} className="h-9">
                   <Save className="h-4 w-4 mr-1" />
                   Save
                 </Button>
-                <Button size="sm" variant="outline" onClick={handleCancel}>
+                <Button size="sm" variant="outline" onClick={handleCancel} className="h-9">
                   <X className="h-4 w-4 mr-1" />
                   Cancel
                 </Button>
@@ -96,7 +107,19 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
                         )
                       }
                       return (
-                        <div className="relative">
+                        <div className="relative group/code">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-2 top-2 h-8 w-8 p-0 opacity-0 group-hover/code:opacity-100 transition-opacity"
+                            onClick={() => copyCodeToClipboard(String(children))}
+                          >
+                            {copiedCode === String(children) ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
                           <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
                             <code className={className} {...props}>
                               {children}
@@ -116,45 +139,43 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
             </div>
           )}
 
-          {!isEditing && (
-            <div className="flex items-center mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={copyToClipboard}
-                className="h-8 px-2 text-gray-500 hover:text-gray-700"
-              >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="h-8 px-2 text-gray-500 hover:text-gray-700"
-              >
-                <Edit3 className="h-4 w-4" />
-              </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 px-2 text-gray-500 hover:text-red-600">
-                    <Trash2 className="h-4 w-4" />
+          <div className="flex items-center mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copyToClipboard(message.content)}
+              className="h-9 px-3 text-gray-500 hover:text-gray-700"
+            >
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              className="h-9 px-3 text-gray-500 hover:text-gray-700"
+            >
+              <Edit3 className="h-4 w-4" />
+            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-9 px-3 text-gray-500 hover:text-red-600">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Delete Message</DialogTitle>
+                </DialogHeader>
+                <p>Are you sure you want to delete this message? This action cannot be undone.</p>
+                <div className="flex justify-end space-x-2 mt-4">
+                  <Button variant="outline">Cancel</Button>
+                  <Button variant="destructive" onClick={() => onDelete(message.id)}>
+                    Delete
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Delete Message</DialogTitle>
-                  </DialogHeader>
-                  <p>Are you sure you want to delete this message? This action cannot be undone.</p>
-                  <div className="flex justify-end space-x-2 mt-4">
-                    <Button variant="outline">Cancel</Button>
-                    <Button variant="destructive" onClick={() => onDelete(message.id)}>
-                      Delete
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          )}
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
     </div>

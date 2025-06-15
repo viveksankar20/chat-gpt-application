@@ -16,7 +16,7 @@ interface ChatSidebarProps {
 export function ChatSidebar({ chats, activeChat, onChatSelect, onNewChat, onDeleteChat }: ChatSidebarProps) {
   return (
     <div className="flex flex-col h-full bg-gray-900 text-white">
-      <div className="p-4 border-b border-gray-700">
+      <div className="flex-shrink-0 p-4 border-b border-gray-700">
         <Button
           onClick={onNewChat}
           className="w-full bg-gray-800 hover:bg-gray-700 text-white border border-gray-600"
@@ -27,8 +27,8 @@ export function ChatSidebar({ chats, activeChat, onChatSelect, onNewChat, onDele
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 p-2">
-        <div className="space-y-1">
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-2 space-y-1">
           {chats.map((chat) => (
             <div
               key={chat.id}
@@ -59,7 +59,7 @@ export function ChatSidebar({ chats, activeChat, onChatSelect, onNewChat, onDele
             </div>
           ))}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   )
 }

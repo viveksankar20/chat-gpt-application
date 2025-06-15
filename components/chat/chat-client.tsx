@@ -157,9 +157,9 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
   const currentChat = chats.find((chat) => chat.id === activeChat)
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-white overflow-hidden">
       {/* Desktop Sidebar */}
-      <div className="hidden md:block w-64 border-r border-gray-200">
+      <div className="hidden md:block fixed left-0 top-0 bottom-0 w-64 border-r border-gray-200">
         <ChatSidebar
           chats={chats}
           activeChat={activeChat}
@@ -171,7 +171,7 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
 
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-64">
+        <SheetContent side="left" className="p-0 w-[85vw] sm:w-64">
           <ChatSidebar
             chats={chats}
             activeChat={activeChat}
@@ -183,18 +183,24 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
       </Sheet>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        <ChatHeader title={currentChat?.title || "New Chat"} onOpenSidebar={() => setSidebarOpen(true)} />
+      <main className="flex-1 flex flex-col h-screen md:ml-64">
+        <div className="flex-shrink-0">
+          <ChatHeader title={currentChat?.title || "New Chat"} onOpenSidebar={() => setSidebarOpen(true)} />
+        </div>
 
-        <MessageList
-          messages={messages}
-          loading={loading}
-          onEditMessage={editMessage}
-          onDeleteMessage={deleteMessage}
-        />
+        <div className="flex-1 overflow-hidden relative">
+          <MessageList
+            messages={messages}
+            loading={loading}
+            onEditMessage={editMessage}
+            onDeleteMessage={deleteMessage}
+          />
+        </div>
 
-        <ChatInput onSendMessage={sendMessage} loading={loading} />
-      </div>
+        <div className="flex-shrink-0">
+          <ChatInput onSendMessage={sendMessage} loading={loading} />
+        </div>
+      </main>
     </div>
   )
 }
