@@ -1,4 +1,21 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ChatGPT Clone
+
+A sophisticated full-stack web application developed using the modern tech stack of Next.js, TypeScript, and MongoDB to create an intelligent chat interface similar to ChatGPT. The platform enables users to engage in natural conversations with AI, manage multiple chat sessions, and access conversation history—all through an intuitive and responsive interface. Built with scalability in mind, the application integrates with GROQ's advanced language models to provide intelligent responses while maintaining conversation context and offering features like message editing, deletion, and persistent storage of chat histories.
+
+## Key Features
+- Real-time chat interface with message history
+- Multiple AI model support through GROQ API
+- Persistent storage of conversations using MongoDB
+- Responsive design with modern UI components
+- Message editing and deletion capabilities
+
+## Tech Stack
+- Next.js 14
+- TypeScript
+- MongoDB
+- Tailwind CSS
+- GROQ AI API
+- LangChain
 
 ## Getting Started
 

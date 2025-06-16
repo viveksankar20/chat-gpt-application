@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, { params }: RouteParams): Promise<N
 
     const { chatId } = params
     const body = await req.json()
-    const { content } = body
+    const { content, modelName = "llama3-8b-8192" } = body
 
     if (!mongoose.Types.ObjectId.isValid(chatId)) {
       return NextResponse.json({ error: "Invalid chat ID", success: false }, { status: 400 })
@@ -82,45 +82,74 @@ export async function POST(req: NextRequest, { params }: RouteParams): Promise<N
     await userMessage.save()
 
     // Get conversation history for context
-    const previousMessages = await Message.find({ chatId }).sort({ createdAt: 1 }).limit(20).lean<IMessage[]>()
+    const previousMessages = await Message.find({ chatId })
+      .sort({ createdAt: -1 }) // Get most recent messages first
+      .limit(5) // Limit to last 5 messages to stay within token limits
+      .lean<IMessage[]>()
 
     // Convert to LangChain message format
-    const conversationHistory: BaseMessage[] = previousMessages.map((msg) =>
-      msg.role === "user" ? new HumanMessage(msg.content) : new AIMessage(msg.content),
-    )
+    const conversationHistory: BaseMessage[] = previousMessages
+      .reverse() // Reverse to get chronological order
+      .map((msg) =>
+        msg.role === "user" ? new HumanMessage(msg.content) : new AIMessage(msg.content),
+      )
 
-    // Get AI response
-    const response = await model.invoke(conversationHistory)
+    try {
+      // Initialize model with selected model name
+      const model = new ChatOpenAI({
+        openAIApiKey: process.env.GROQ_API_KEY,
+        configuration: {
+          baseURL: "https://api.groq.com/openai/v1",
+        },
+        modelName,
+        maxTokens: 1000, // Limit response size
+      })
 
-    // Save assistant response
-    const assistantMessage = new Message({
-      chatId,
-      role: "assistant",
-      content: response.content as string,
-    })
-    await assistantMessage.save()
+      // Get AI response
+      const response = await model.invoke(conversationHistory)
 
-    // Update chat title if it's the first message
-    if (chat.title === "New Chat" && previousMessages.length === 1) {
-      const newTitle = content.slice(0, 50) + (content.length > 50 ? "..." : "")
-      await Chat.findByIdAndUpdate(chatId, { title: newTitle })
-    }
-
-    return NextResponse.json({
-      userMessage: {
-        id: userMessage._id.toString(),
-        role: "user",
-        content: userMessage.content,
-        createdAt: userMessage.createdAt.toISOString(),
-      },
-      assistantMessage: {
-        id: assistantMessage._id.toString(),
+      // Save assistant response
+      const assistantMessage = new Message({
+        chatId,
         role: "assistant",
-        content: assistantMessage.content,
-        createdAt: assistantMessage.createdAt.toISOString(),
-      },
-      success: true,
-    })
+        content: response.content as string,
+      })
+      await assistantMessage.save()
+
+      // Update chat title if it's the first message
+      if (chat.title === "New Chat" && previousMessages.length === 1) {
+        const newTitle = content.slice(0, 50) + (content.length > 50 ? "..." : "")
+        await Chat.findByIdAndUpdate(chatId, { title: newTitle })
+      }
+
+      return NextResponse.json({
+        userMessage: {
+          id: userMessage._id.toString(),
+          role: "user",
+          content: userMessage.content,
+          createdAt: userMessage.createdAt.toISOString(),
+        },
+        assistantMessage: {
+          id: assistantMessage._id.toString(),
+          role: "assistant",
+          content: assistantMessage.content,
+          createdAt: assistantMessage.createdAt.toISOString(),
+        },
+        success: true,
+      })
+    } catch (error: any) {
+      console.error("Error processing message:", error)
+      
+      // Handle token limit error specifically
+      if (error.code === 'rate_limit_exceeded' || error.type === 'tokens') {
+        return NextResponse.json({ 
+          error: "Message too long. Please try a shorter message or wait a minute before trying again.", 
+          success: false 
+        }, { status: 413 })
+      }
+      
+      return NextResponse.json({ error: "Failed to process message", success: false }, { status: 500 })
+    }
   } catch (error) {
     console.error("Error processing message:", error)
     return NextResponse.json({ error: "Failed to process message", success: false }, { status: 500 })

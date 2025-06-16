@@ -11,6 +11,7 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react'],
+    serverActions: true,
   },
   webpack: (config) => {
     config.resolve.alias = {
@@ -19,6 +20,14 @@ const nextConfig = {
     }
     return config
   },
+  // Enable React strict mode for better development experience
+  reactStrictMode: true,
+  // Enable SWC minification
+  swcMinify: true,
+  // Optimize production builds
+  productionBrowserSourceMaps: false,
+  poweredByHeader: false,
+  compress: true,
 }
 
 export default nextConfig
