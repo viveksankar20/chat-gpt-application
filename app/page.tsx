@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 import { ChatService } from "@/lib/chat-service"
 import { ChatClient } from "@/components/chat/chat-client"
-
 export default async function HomePage() {
   try {
     // Fetch initial data on the server
