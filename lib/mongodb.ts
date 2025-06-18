@@ -8,7 +8,12 @@ if (!MONGODB_URI) {
   );
 }
 
-let cached = global.mongoose;
+interface Cached {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+let cached: Cached = global.mongoose;
 
 if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };

@@ -20,11 +20,18 @@ interface RouteParams {
   };
 }
 
-const model = new ChatOpenAI({
-  modelName: "gpt-3.5-turbo",
-  temperature: 0.7,
-  maxTokens: 1000,
-});
+// Initialize the model outside of the route handlers
+let model: ChatOpenAI;
+
+try {
+  model = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
+    temperature: 0.7,
+    maxTokens: 1000,
+  });
+} catch (error) {
+  console.error("Error initializing ChatOpenAI:", error);
+}
 
 export async function GET(
   req: NextRequest,
@@ -71,6 +78,10 @@ export async function POST(
   { params }: RouteParams
 ): Promise<NextResponse<MessageResponse>> {
   try {
+    if (!model) {
+      throw new Error("ChatOpenAI model not initialized");
+    }
+
     const body = await req.json();
     const connection = await connectToDatabase();
     if (!connection) {
@@ -78,7 +89,7 @@ export async function POST(
     }
 
     const { chatId } = params;
-    const { content, modelName = "gpt-3.5-turbo" } = body;
+    const { content } = body;
 
     if (!content) {
       return NextResponse.json(
