@@ -13,12 +13,24 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react'],
     serverActions: true,
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
+    // Optimize for production
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+
+    // Add alias for better imports
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': '.',
-    }
-    return config
+    };
+
+    return config;
   },
   // Enable React strict mode for better development experience
   reactStrictMode: true,
