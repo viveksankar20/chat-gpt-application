@@ -21,7 +21,7 @@ interface RouteParams {
 }
 
 const model = new ChatOpenAI({
-  modelName: "llama3-8b-8192",
+  modelName: "gpt-3.5-turbo",
   temperature: 0.7,
   maxTokens: 1000,
 });
@@ -31,7 +31,10 @@ export async function GET(
   { params }: RouteParams
 ): Promise<NextResponse<MessageResponse>> {
   try {
-    await connectToDatabase();
+    const connection = await connectToDatabase();
+    if (!connection) {
+      throw new Error("Failed to connect to database");
+    }
 
     const { chatId } = params;
     if (!chatId) {
@@ -69,10 +72,13 @@ export async function POST(
 ): Promise<NextResponse<MessageResponse>> {
   try {
     const body = await req.json();
-    await connectToDatabase();
+    const connection = await connectToDatabase();
+    if (!connection) {
+      throw new Error("Failed to connect to database");
+    }
 
     const { chatId } = params;
-    const { content, modelName = "llama3-8b-8192" } = body;
+    const { content, modelName = "gpt-3.5-turbo" } = body;
 
     if (!content) {
       return NextResponse.json(
@@ -109,14 +115,14 @@ export async function POST(
       const assistantMessage = new Message({
         chatId,
         role: "assistant",
-        content: response.content,
+        content: typeof response.content === 'string' ? response.content : JSON.stringify(response.content),
       });
       await assistantMessage.save();
 
       return NextResponse.json({
         messages: [
           { role: "user", content },
-          { role: "assistant", content: response.content },
+          { role: "assistant", content: typeof response.content === 'string' ? response.content : JSON.stringify(response.content) },
         ],
         success: true,
       });
