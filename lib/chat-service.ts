@@ -3,6 +3,11 @@ import { Chat, Message, type IChat, type IMessage } from "@/models/chat.model"
 import type { Chat as ChatType, Message as MessageType } from "@/types/chat"
 import { streamGroqChatCompletion, GroqChatMessage } from "@/lib/ai"
 
+// Utility to strip <think>...</think> tags from model output
+function stripThinkTags(content: string): string {
+  return content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+}
+
 export class ChatService {
   static async getChats(userId = "default-user"): Promise<ChatType[]> {
     await connectDB()
@@ -121,11 +126,14 @@ export class ChatService {
       assistantContent += chunk.choices[0]?.delta?.content || ''
     }
 
+    // Strip <think>...</think> tags
+    const cleanContent = stripThinkTags(assistantContent)
+
     // Save assistant response
     const assistantMessage = new Message({
       chatId,
       role: "assistant",
-      content: assistantContent,
+      content: cleanContent,
     })
     await assistantMessage.save()
 
@@ -135,7 +143,7 @@ export class ChatService {
     return {
       id: assistantMessage._id.toString(),
       role: assistantMessage.role,
-      content: assistantMessage.content,
+      content: cleanContent,
       createdAt: assistantMessage.createdAt.toISOString(),
     }
   }
