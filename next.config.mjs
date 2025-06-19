@@ -40,6 +40,11 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   poweredByHeader: false,
   compress: true,
+  // Add build-time environment variables
+  env: {
+    MONGODB_URI: process.env.MONGODB_URI,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  },
 }
 
 export default nextConfig

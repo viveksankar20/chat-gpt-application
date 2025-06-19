@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/mongoose"
 import { Chat, Message, type IChat, type IMessage } from "@/models/chat.model"
 import type { Chat as ChatType, Message as MessageType } from "@/types/chat"
+import { streamGroqChatCompletion, GroqChatMessage } from "@/lib/ai"
 
 export class ChatService {
   static async getChats(userId = "default-user"): Promise<ChatType[]> {
@@ -29,7 +30,7 @@ export class ChatService {
 
     const messages = await Message.find({ chatId }).sort({ createdAt: 1 }).lean<IMessage[]>()
 
-    return messages.map((msg) => ({
+    return messages.map((msg: IMessage) => ({
       id: msg._id.toString(),
       role: msg.role,
       content: msg.content,
@@ -54,6 +55,88 @@ export class ChatService {
         messageCount: messages.length,
       },
       messages,
+    }
+  }
+
+  static async createChat(title: string, userId = "default-user"): Promise<ChatType> {
+    await connectDB()
+
+    const newChat = new Chat({
+      title,
+      userId,
+    })
+
+    await newChat.save()
+
+    return {
+      id: newChat._id.toString(),
+      title: newChat.title,
+      createdAt: newChat.createdAt.toISOString(),
+      updatedAt: newChat.updatedAt.toISOString(),
+      messageCount: 0,
+    }
+  }
+
+  static async createUserMessage(chatId: string, content: string): Promise<MessageType> {
+    await connectDB()
+
+    const userMessage = new Message({
+      chatId,
+      role: "user",
+      content,
+    })
+    await userMessage.save()
+
+    // Update chat's updatedAt
+    await Chat.findByIdAndUpdate(chatId, { updatedAt: new Date() })
+
+    return {
+      id: userMessage._id.toString(),
+      role: userMessage.role,
+      content: userMessage.content,
+      createdAt: userMessage.createdAt.toISOString(),
+    }
+  }
+
+  static async createAssistantMessage(chatId: string, userContent: string): Promise<MessageType> {
+    await connectDB()
+
+    // Get conversation history
+    const previousMessages = await Message.find({ chatId })
+      .sort({ createdAt: 1 })
+      .lean<IMessage[]>()
+
+    // Convert to Groq message format
+    const groqMessages: GroqChatMessage[] = previousMessages.map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    }))
+    // Add the new user message
+    groqMessages.push({ role: "user", content: userContent })
+
+    // Get AI response (stream and collect)
+    const stream = await streamGroqChatCompletion({ messages: groqMessages })
+    let assistantContent = ""
+    for await (const chunk of stream) {
+      assistantContent += chunk.choices[0]?.delta?.content || ''
+    }
+
+    // Save assistant response
+    const assistantMessage = new Message({
+      chatId,
+      role: "assistant",
+      content: assistantContent,
+    })
+    await assistantMessage.save()
+
+    // Update chat's updatedAt
+    await Chat.findByIdAndUpdate(chatId, { updatedAt: new Date() })
+
+    return {
+      id: assistantMessage._id.toString(),
+      role: assistantMessage.role,
+      content: assistantMessage.content,
+      createdAt: assistantMessage.createdAt.toISOString(),
     }
   }
 }

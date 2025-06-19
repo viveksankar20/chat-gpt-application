@@ -15,7 +15,13 @@ export function ChatHeader({ title, onOpenSidebar }: ChatHeaderProps) {
       <div className="flex items-center space-x-3">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="sm" className="md:hidden h-10 w-10 p-0" onClick={onOpenSidebar}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden h-10 w-10 p-0"
+              onClick={onOpenSidebar}
+              type="button"
+            >
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>

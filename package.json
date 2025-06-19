@@ -9,8 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@langchain/core": "^0.1.17",
-    "@langchain/openai": "^0.0.14",
+    "@langchain/core": "^0.3.59",
+    "@langchain/groq": "^0.2.3",
+    "@langchain/openai": "^0.5.13",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-scroll-area": "^1.0.5",
     "ai": "^2.2.31",

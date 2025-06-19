@@ -11,7 +11,7 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       MONGODB_URI: string
-      GROQ_API_KEY: string
+      OPENAI_API_KEY: string
       NODE_ENV: "development" | "production" | "test"
     }
   }

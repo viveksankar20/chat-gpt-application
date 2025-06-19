@@ -110,7 +110,7 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
         body: JSON.stringify({ content }),
       })
       const data = await response.json()
-
+console.log(data)
       if (data.success && data.userMessage && data.assistantMessage) {
         setMessages((prev) => [...prev, data.userMessage, data.assistantMessage])
         loadChats() // Reload chats to update the title if it changed

@@ -17,8 +17,13 @@ export function ChatInput({ onSendMessage, loading }: ChatInputProps) {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!input.trim() || loading) return
+    console.log("Form submitted with input:", input)
+    if (!input.trim() || loading) {
+      console.log("Input is empty or loading:", { input, loading })
+      return
+    }
 
+    console.log("Sending message:", input.trim())
     onSendMessage(input.trim())
     setInput("")
   }

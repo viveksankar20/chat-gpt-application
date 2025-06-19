@@ -1,69 +1,58 @@
-import mongoose, { type Document, Schema, type Model } from "mongoose"
+import mongoose from 'mongoose';
 
-export interface IChat extends Document {
-  _id: mongoose.Types.ObjectId
-  title: string
-  createdAt: Date
-  updatedAt: Date
-  userId: string
+export interface IChat {
+  _id: mongoose.Types.ObjectId;
+  title: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface IMessage extends Document {
-  _id: mongoose.Types.ObjectId
-  chatId: mongoose.Types.ObjectId
-  role: "user" | "assistant"
-  content: string
-  createdAt: Date
+export interface IMessage {
+  _id: mongoose.Types.ObjectId;
+  chatId: mongoose.Types.ObjectId;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: Date;
 }
 
-const ChatSchema = new Schema<IChat>({
-  title: {
-    type: String,
-    required: true,
-    default: "New Chat",
+const chatSchema = new mongoose.Schema<IChat>(
+  {
+    title: {
+      type: String,
+      required: true,
+    },
+    userId: {
+      type: String,
+      required: true,
+    },
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-  userId: {
-    type: String,
-    default: "default-user",
-  },
-})
-
-const MessageSchema = new Schema<IMessage>({
-  chatId: {
-    type: Schema.Types.ObjectId,
-    ref: "Chat",
-    required: true,
-  },
-  role: {
-    type: String,
-    enum: ["user", "assistant"],
-    required: true,
-  },
-  content: {
-    type: String,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-})
-
-// Update chat's updatedAt when a new message is added
-MessageSchema.pre("save", async function (this: IMessage) {
-  if (this.isNew) {
-    const ChatModel = mongoose.models.Chat as Model<IChat>
-    await ChatModel.findByIdAndUpdate(this.chatId, { updatedAt: new Date() })
+  {
+    timestamps: true,
   }
-})
+);
 
-export const Chat: Model<IChat> = mongoose.models.Chat || mongoose.model<IChat>("Chat", ChatSchema)
-export const Message: Model<IMessage> = mongoose.models.Message || mongoose.model<IMessage>("Message", MessageSchema)
+const messageSchema = new mongoose.Schema<IMessage>(
+  {
+    chatId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Chat',
+      required: true,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'assistant'],
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+export const Chat = mongoose.models.Chat || mongoose.model<IChat>('Chat', chatSchema);
+export const Message = mongoose.models.Message || mongoose.model<IMessage>('Message', messageSchema);
