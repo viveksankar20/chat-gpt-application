@@ -14,16 +14,17 @@ interface StreamGroqChatCompletionParams {
   maxTokens?: number;
   topP?: number;
   stop?: string | string[] | null;
+  model?: string;
 }
 
-export async function streamGroqChatCompletion({ messages, temperature = 1, maxTokens = 1024, topP = 1, stop = null }: StreamGroqChatCompletionParams) {
+export async function streamGroqChatCompletion({ messages, temperature = 1, maxTokens = 1024, topP = 1, stop = null, model }: StreamGroqChatCompletionParams) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('GROQ_API_KEY is not set in environment variables');
   }
 
   const chatCompletion = await groq.chat.completions.create({
     messages,
-    model: 'deepseek-r1-distill-llama-70b',
+    model: model || 'deepseek-r1-distill-llama-70b',
     temperature,
     max_completion_tokens: maxTokens,
     top_p: topP,

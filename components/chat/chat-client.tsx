@@ -20,6 +20,14 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [loading, setLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  // Model selection state
+  const models = [
+    'deepseek-r1-distill-llama-70b',
+    'meta-llama/llama-4-scout-17b-16e-instruct',
+    'gpt-3.5-turbo',
+    'gpt-4o',
+  ]
+  const [model, setModel] = useState(models[0])
 
   // Load messages when active chat changes
   useEffect(() => {
@@ -98,7 +106,7 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
     setSidebarOpen(false)
   }
 
-  const sendMessage = async (content: string): Promise<void> => {
+  const sendMessage = async (content: string, selectedModel: string): Promise<void> => {
     if (!activeChat || loading) return
 
     setLoading(true)
@@ -107,10 +115,9 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
       const response = await fetch(`/api/chats/${activeChat}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, model: selectedModel }),
       })
       const data = await response.json()
-console.log(data)
       if (data.success && data.userMessage && data.assistantMessage) {
         setMessages((prev) => [...prev, data.userMessage, data.assistantMessage])
         loadChats() // Reload chats to update the title if it changed

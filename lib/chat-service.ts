@@ -103,7 +103,7 @@ export class ChatService {
     }
   }
 
-  static async createAssistantMessage(chatId: string, userContent: string): Promise<MessageType> {
+  static async createAssistantMessage(chatId: string, userContent: string, model?: string): Promise<MessageType> {
     await connectDB()
 
     // Get conversation history
@@ -120,7 +120,7 @@ export class ChatService {
     groqMessages.push({ role: "user", content: userContent })
 
     // Get AI response (stream and collect)
-    const stream = await streamGroqChatCompletion({ messages: groqMessages })
+    const stream = await streamGroqChatCompletion({ messages: groqMessages, model })
     let assistantContent = ""
     for await (const chunk of stream) {
       assistantContent += chunk.choices[0]?.delta?.content || ''

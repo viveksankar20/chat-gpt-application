@@ -26,7 +26,7 @@ export async function POST(
 ) {
   try {
     const body = await req.json()
-    const { content } = body
+    const { content, model } = body
 
     if (!content) {
       return NextResponse.json(
@@ -39,7 +39,7 @@ export async function POST(
     const userMessage = await ChatService.createUserMessage(params.chatId, content)
     
     // Get AI response
-    const assistantMessage = await ChatService.createAssistantMessage(params.chatId, content)
+    const assistantMessage = await ChatService.createAssistantMessage(params.chatId, content, model)
 
     return NextResponse.json({
       success: true,

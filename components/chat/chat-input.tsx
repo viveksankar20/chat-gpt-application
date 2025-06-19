@@ -8,30 +8,46 @@ import { Input } from "@/components/ui/input"
 import { Send } from "lucide-react"
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => void
+  onSendMessage: (message: string, model: string) => void
   loading: boolean
 }
 
 export function ChatInput({ onSendMessage, loading }: ChatInputProps) {
   const [input, setInput] = useState("")
+  const [model, setModel] = useState('deepseek-r1-distill-llama-70b')
+  const modelOptions = [
+    'deepseek-r1-distill-llama-70b',
+    'meta-llama/llama-4-scout-17b-16e-instruct',
+    "llama-3.3-70b-versatile",
+    "gemma2-9b-it",
+    "qwen-qwq-32b",
+  ]
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    console.log("Form submitted with input:", input)
     if (!input.trim() || loading) {
-      console.log("Input is empty or loading:", { input, loading })
       return
     }
-
-    console.log("Sending message:", input.trim())
-    onSendMessage(input.trim())
+    onSendMessage(input.trim(), model)
     setInput("")
   }
 
   return (
     <div className="sticky bottom-0 border-t border-gray-200 bg-white p-4">
       <div className="max-w-4xl mx-auto">
-        <form onSubmit={handleSubmit} className="flex space-x-3">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+          {/* Model Dropdown */}
+          <select
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            className="border border-gray-300 rounded-xl px-3 py-2 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white w-full sm:w-auto"
+            disabled={loading}
+            style={{ minWidth: 0, maxWidth: 300 }}
+          >
+            {modelOptions.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
           <div className="flex-1 relative">
             <Input
               value={input}
