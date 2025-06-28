@@ -1,8 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
 import { connectDB } from "@/lib/mongoose"
 import { Chat, Message, type IChat, type IMessage } from "@/models/chat.model"
 import mongoose from "mongoose"
 import type { ChatResponse, MessageResponse } from "@/types/chat"
+import { authOptions } from "../../auth/[...nextauth]/route"
 
 interface RouteParams {
   params: {
@@ -16,6 +18,15 @@ export async function GET(
   { params }: RouteParams,
 ): Promise<NextResponse<ChatResponse & MessageResponse>> {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     await connectDB()
 
     const { chatId } = params
@@ -27,6 +38,14 @@ export async function GET(
     const chat = await Chat.findById(chatId).lean<IChat>()
     if (!chat) {
       return NextResponse.json({ error: "Chat not found", success: false }, { status: 404 })
+    }
+
+    // Check if the chat belongs to the authenticated user
+    if (chat.userId !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 403 }
+      )
     }
 
     const messages = await Message.find({ chatId }).sort({ createdAt: 1 }).lean<IMessage[]>()
@@ -56,8 +75,17 @@ export async function GET(
 }
 
 // PUT - Update chat (mainly for title)
-export async function PUT(req: NextRequest, { params }: RouteParams): Promise<NextResponse<ChatResponse>> {
+export async function PUT(req: NextRequest, { params }: RouteParams): Promise<NextResponse<ChatResponse | { success: false; error: string }>> {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     await connectDB()
 
     const { chatId } = params
@@ -66,6 +94,19 @@ export async function PUT(req: NextRequest, { params }: RouteParams): Promise<Ne
 
     if (!mongoose.Types.ObjectId.isValid(chatId)) {
       return NextResponse.json({ error: "Invalid chat ID", success: false }, { status: 400 })
+    }
+
+    // Check if the chat belongs to the authenticated user
+    const existingChat = await Chat.findById(chatId).lean<IChat>()
+    if (!existingChat) {
+      return NextResponse.json({ error: "Chat not found", success: false }, { status: 404 })
+    }
+
+    if (existingChat.userId !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 403 }
+      )
     }
 
     const updatedChat = await Chat.findByIdAndUpdate(
@@ -98,14 +139,36 @@ export async function PUT(req: NextRequest, { params }: RouteParams): Promise<Ne
 export async function DELETE(
   req: NextRequest,
   { params }: RouteParams,
-): Promise<NextResponse<{ message: string; success: boolean }>> {
+): Promise<NextResponse<{ message: string; success: boolean } | { success: false; error: string }>> {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     await connectDB()
 
     const { chatId } = params
 
     if (!mongoose.Types.ObjectId.isValid(chatId)) {
       return NextResponse.json({ message: "Invalid chat ID", success: false }, { status: 400 })
+    }
+
+    // Check if the chat belongs to the authenticated user
+    const existingChat = await Chat.findById(chatId).lean<IChat>()
+    if (!existingChat) {
+      return NextResponse.json({ message: "Chat not found", success: false }, { status: 404 })
+    }
+
+    if (existingChat.userId !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 403 }
+      )
     }
 
     // Delete all messages in the chat

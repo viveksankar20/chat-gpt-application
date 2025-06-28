@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
 import { ChatService } from "@/lib/chat-service"
+import { authOptions } from "../auth/[...nextauth]/route"
+import type { AuthOptions } from "next-auth"
 
-// GET all chats
+// GET all chats for the authenticated user
 export async function GET() {
   try {
-    const chats = await ChatService.getChats()
+    const session = await getServerSession(authOptions as AuthOptions)
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    const chats = await ChatService.getChatsByUserId(session.user.id)
     return NextResponse.json({ success: true, chats })
   } catch (error) {
     console.error("Error fetching chats:", error)
@@ -15,13 +27,22 @@ export async function GET() {
   }
 }
 
-// POST - Create new chat
+// POST - Create new chat for the authenticated user
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions as AuthOptions)
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     const body = await req.json()
     const { title = "New Chat" } = body
 
-    const chat = await ChatService.createChat(title)
+    const chat = await ChatService.createChat(title, session.user.id)
     return NextResponse.json({ success: true, chat })
   } catch (error) {
     console.error("Error creating chat:", error)

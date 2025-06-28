@@ -1,53 +1,134 @@
-# ChatGPT Clone
+# ChatGPT Clone with GROQ AI
 
-A sophisticated full-stack web application developed using the modern tech stack of Next.js, TypeScript, and MongoDB to create an intelligent chat interface similar to ChatGPT. The platform enables users to engage in natural conversations with AI, manage multiple chat sessions, and access conversation history—all through an intuitive and responsive interface. Built with scalability in mind, the application integrates with GROQ's advanced language models to provide intelligent responses while maintaining conversation context and offering features like message editing, deletion, and persistent storage of chat histories.
+A modern ChatGPT-like interface built with Next.js 14, TypeScript, MongoDB, Tailwind CSS, and GROQ AI API, integrated with LangChain. Features include multiple chat sessions, persistent storage, message editing/deletion, and support for multiple AI models.
 
-## Key Features
-- Real-time chat interface with message history
-- Multiple AI model support through GROQ API
-- Persistent storage of conversations using MongoDB
-- Responsive design with modern UI components
-- Message editing and deletion capabilities
+## Features
 
-## Tech Stack
-- Next.js 14
-- TypeScript
-- MongoDB
-- Tailwind CSS
-- GROQ AI API
-- LangChain
+- 🤖 **GROQ AI Integration** - Powered by GROQ's fast AI models
+- 💬 **Multiple Chat Sessions** - Create and manage multiple conversations
+- 🔐 **User Authentication** - Secure login/logout with NextAuth.js
+- 🎨 **Modern UI** - Beautiful interface with shadcn/ui components
+- 🌙 **Dark/Light Mode** - Full theme support with system detection
+- ✏️ **Message Management** - Edit and delete messages
+- 📱 **Responsive Design** - Works on desktop and mobile
+- 🧪 **GROQ Tester** - Test different models and parameters
+- 🔒 **Protected Routes** - Secure access to chat features
+
+## Authentication Setup
+
+This project includes a complete authentication system with:
+
+- User registration and login
+- Password hashing with bcryptjs
+- JWT-based sessions
+- Protected routes
+- User-specific chat isolation
+
+### Required Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```env
+# Database
+MONGODB_URI=your_mongodb_connection_string
+
+# NextAuth
+NEXTAUTH_SECRET=your_nextauth_secret_key_here
+NEXTAUTH_URL=http://localhost:3000
+
+# GROQ API
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+### Generate NextAuth Secret
+
+You can generate a secure secret for NextAuth using:
+
+```bash
+openssl rand -base64 32
+```
 
 ## Getting Started
 
-First, run the development server:
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd chat-gpt-application
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   - Copy `.env.example` to `.env.local`
+   - Fill in your MongoDB URI, GROQ API key, and NextAuth secret
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+   - Navigate to `http://localhost:3000`
+   - Sign up for a new account or sign in
+   - Start chatting with GROQ AI!
+
+## Usage
+
+### Authentication
+- **Sign Up**: Create a new account with email and password
+- **Sign In**: Log in with your credentials
+- **Sign Out**: Use the user menu in the navigation bar
+
+### Chat Features
+- **New Chat**: Start a new conversation
+- **Model Selection**: Choose from different GROQ models
+- **Message Editing**: Click the edit icon on any message
+- **Message Deletion**: Use the delete button with confirmation
+- **Code Copying**: Click the copy button on code blocks
+
+### GROQ Tester
+- **Model Testing**: Test different GROQ models
+- **Parameter Tuning**: Adjust temperature and max tokens
+- **Prompt Modes**: Choose from different system prompts
+- **Response Analysis**: View detailed response statistics
+
+## Tech Stack
+
+- **Frontend**: Next.js 14, React 18, TypeScript
+- **Styling**: Tailwind CSS, shadcn/ui
+- **Authentication**: NextAuth.js, bcryptjs
+- **Database**: MongoDB with Mongoose
+- **AI Integration**: GROQ API, LangChain
+- **Markdown**: React Markdown with syntax highlighting
+
+## Project Structure
+
+```
+├── app/                    # Next.js app directory
+│   ├── api/               # API routes
+│   ├── auth/              # Authentication pages
+│   └── groq-tester/       # GROQ testing interface
+├── components/            # React components
+│   ├── ui/               # shadcn/ui components
+│   ├── chat/             # Chat-related components
+│   └── providers/        # Context providers
+├── lib/                  # Utility libraries
+├── models/               # MongoDB models
+├── types/                # TypeScript type definitions
+└── middleware.ts         # NextAuth middleware
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Contributing
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## License
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License.

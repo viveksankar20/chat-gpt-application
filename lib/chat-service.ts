@@ -30,6 +30,10 @@ export class ChatService {
     return chatsWithMessageCount
   }
 
+  static async getChatsByUserId(userId: string): Promise<ChatType[]> {
+    return this.getChats(userId)
+  }
+
   static async getMessages(chatId: string): Promise<MessageType[]> {
     await connectDB()
 

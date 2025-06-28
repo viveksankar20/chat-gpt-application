@@ -57,7 +57,7 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
     <div
       className={cn(
         "group relative px-4 py-6 transition-colors",
-        message.role === "assistant" ? "bg-gray-50 hover:bg-gray-100" : "bg-white hover:bg-gray-50",
+        message.role === "assistant" ? "bg-muted/50 hover:bg-muted" : "bg-background hover:bg-muted/30",
       )}
     >
       <div className="max-w-3xl mx-auto flex space-x-4">
@@ -65,7 +65,9 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
           <div
             className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center",
-              message.role === "assistant" ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600",
+              message.role === "assistant" 
+                ? "bg-primary/10 text-primary" 
+                : "bg-secondary text-secondary-foreground",
             )}
           >
             {message.role === "assistant" ? <Bot className="h-5 w-5" /> : <User className="h-5 w-5" />}
@@ -99,7 +101,7 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
                       if (isInline) {
                         return (
                           <code
-                            className="bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono"
+                            className="bg-muted text-foreground px-1.5 py-0.5 rounded text-sm font-mono border"
                             {...props}
                           >
                             {children}
@@ -120,21 +122,21 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
                               <Copy className="h-4 w-4" />
                             )}
                           </Button>
-                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                            <code className={className} {...props}>
+                          <pre className="bg-muted border p-4 rounded-lg overflow-x-auto">
+                            <code className={cn(className, "text-foreground")} {...props}>
                               {children}
                             </code>
                           </pre>
                         </div>
                       )
                     },
-                    p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed text-gray-900">{children}</p>,
+                    p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed text-foreground">{children}</p>,
                   }}
                 >
                   {message.content}
                 </ReactMarkdown>
               ) : (
-                <p className="text-gray-900 leading-relaxed">{message.content}</p>
+                <p className="leading-relaxed text-foreground">{message.content}</p>
               )}
             </div>
           )}
@@ -144,7 +146,7 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
               variant="ghost"
               size="sm"
               onClick={() => copyToClipboard(message.content)}
-              className="h-9 px-3 text-gray-500 hover:text-gray-700"
+              className="h-9 px-3 text-muted-foreground hover:text-foreground"
             >
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </Button>
@@ -152,13 +154,13 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
               variant="ghost"
               size="sm"
               onClick={() => setIsEditing(true)}
-              className="h-9 px-3 text-gray-500 hover:text-gray-700"
+              className="h-9 px-3 text-muted-foreground hover:text-foreground"
             >
               <Edit3 className="h-4 w-4" />
             </Button>
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-9 px-3 text-gray-500 hover:text-red-600">
+                <Button variant="ghost" size="sm" className="h-9 px-3 text-muted-foreground hover:text-destructive">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </DialogTrigger>

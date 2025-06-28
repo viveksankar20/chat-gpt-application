@@ -107,12 +107,38 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
   }
 
   const sendMessage = async (content: string, selectedModel: string): Promise<void> => {
-    if (!activeChat || loading) return
+    if (loading) return
 
     setLoading(true)
 
     try {
-      const response = await fetch(`/api/chats/${activeChat}/messages`, {
+      let chatId = activeChat
+
+      // If no active chat exists, create a new one
+      if (!chatId) {
+        // Create a meaningful title from the user's message
+        const title = content.length > 50 
+          ? content.substring(0, 50).trim() + "..." 
+          : content.trim()
+        
+        const newChatResponse = await fetch("/api/chats", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title }),
+        })
+        const newChatData = await newChatResponse.json()
+        if (newChatData.success && newChatData.chat) {
+          chatId = newChatData.chat.id
+          setChats((prev) => [newChatData.chat, ...prev])
+          setActiveChat(chatId)
+          setMessages([])
+        } else {
+          throw new Error("Failed to create new chat")
+        }
+      }
+
+      // Send the message to the chat
+      const response = await fetch(`/api/chats/${chatId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content, model: selectedModel }),
@@ -164,9 +190,9 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
   const currentChat = chats.find((chat) => chat.id === activeChat)
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop Sidebar */}
-      <div className="hidden md:block fixed left-0 top-0 bottom-0 w-64 border-r border-gray-200">
+      <div className="hidden md:block fixed left-0 top-0 bottom-0 w-64 z-20">
         <ChatSidebar
           chats={chats}
           activeChat={activeChat}

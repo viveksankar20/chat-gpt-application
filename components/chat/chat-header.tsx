@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger } from "@/components/ui/sheet"
-import { Menu } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Menu, MessageSquare } from "lucide-react"
 
 interface ChatHeaderProps {
   title: string
@@ -11,7 +12,7 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ title, onOpenSidebar }: ChatHeaderProps) {
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+    <header className="sticky top-0 z-10 flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex items-center space-x-3">
         <Sheet>
           <SheetTrigger asChild>
@@ -26,7 +27,13 @@ export function ChatHeader({ title, onOpenSidebar }: ChatHeaderProps) {
             </Button>
           </SheetTrigger>
         </Sheet>
-        <h1 className="text-lg font-semibold text-gray-900 truncate">{title}</h1>
+        <div className="flex items-center space-x-2">
+          <MessageSquare className="h-5 w-5 text-primary" />
+          <h1 className="text-lg font-semibold truncate">{title}</h1>
+          <Badge variant="secondary" className="text-xs">
+            GROQ
+          </Badge>
+        </div>
       </div>
     </header>
   )

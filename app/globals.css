@@ -102,19 +102,19 @@
 }
 
 .prose p {
-  @apply text-gray-900 leading-relaxed mb-4;
+  @apply text-foreground leading-relaxed mb-4;
 }
 
 .prose code {
-  @apply text-sm bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded font-mono;
+  @apply text-sm bg-muted text-foreground px-1.5 py-0.5 rounded font-mono border;
 }
 
 .prose pre {
-  @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
+  @apply bg-muted border p-4 rounded-lg overflow-x-auto mb-4;
 }
 
 .prose pre code {
-  @apply text-gray-100 bg-transparent p-0;
+  @apply text-foreground bg-transparent p-0 border-0;
 }
 
 .prose ul {
@@ -126,7 +126,7 @@
 }
 
 .prose li {
-  @apply text-gray-900;
+  @apply text-foreground;
 }
 
 .prose h1,
@@ -135,7 +135,7 @@
 .prose h4,
 .prose h5,
 .prose h6 {
-  @apply text-gray-900 font-semibold mb-3 mt-6;
+  @apply text-foreground font-semibold mb-3 mt-6;
 }
 
 .prose h1 {
@@ -151,20 +151,79 @@
 }
 
 .prose blockquote {
-  @apply border-l-4 border-gray-300 pl-4 italic text-gray-700 mb-4;
+  @apply border-l-4 border-muted-foreground pl-4 italic text-muted-foreground mb-4;
 }
 
 .prose table {
-  @apply w-full border-collapse border border-gray-300 mb-4;
+  @apply w-full border-collapse border border-border mb-4;
 }
 
 .prose th,
 .prose td {
-  @apply border border-gray-300 px-3 py-2 text-left;
+  @apply border border-border px-3 py-2 text-left;
 }
 
 .prose th {
-  @apply bg-gray-100 font-semibold;
+  @apply bg-muted font-semibold text-foreground;
+}
+
+.prose td {
+  @apply text-foreground;
+}
+
+/* Dark mode specific prose improvements */
+.dark .prose {
+  @apply text-foreground;
+}
+
+.dark .prose p {
+  @apply text-foreground;
+}
+
+.dark .prose code {
+  @apply bg-muted text-foreground border-border;
+}
+
+.dark .prose pre {
+  @apply bg-muted border-border;
+}
+
+.dark .prose pre code {
+  @apply text-foreground;
+}
+
+.dark .prose li {
+  @apply text-foreground;
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4,
+.dark .prose h5,
+.dark .prose h6 {
+  @apply text-foreground;
+}
+
+.dark .prose blockquote {
+  @apply border-muted-foreground text-muted-foreground;
+}
+
+.dark .prose table {
+  @apply border-border;
+}
+
+.dark .prose th,
+.dark .prose td {
+  @apply border-border;
+}
+
+.dark .prose th {
+  @apply bg-muted text-foreground;
+}
+
+.dark .prose td {
+  @apply text-foreground;
 }
 
 /* Animation improvements */
