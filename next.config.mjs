@@ -11,7 +11,7 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react'],
-    serverActions: true,
+    // serverActions: true,
   },
   webpack: (config, { isServer }) => {
     // Optimize for production

@@ -7,6 +7,7 @@ import { ChatHeader } from "./chat-header"
 import { MessageList } from "./message-list"
 import { ChatInput } from "./chat-input"
 import type { Chat, Message } from "@/types/chat"
+import { useZustand } from "@/hooks/zustand"
 
 interface ChatClientProps {
   initialChats: Chat[]
@@ -20,6 +21,7 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [loading, setLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const {isOpen,close,open,toggle}=useZustand()
   // Model selection state
   const models = [
     'deepseek-r1-distill-llama-70b',
@@ -27,8 +29,6 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
     'gpt-3.5-turbo',
     'gpt-4o',
   ]
-  const [model, setModel] = useState(models[0])
-
   // Load messages when active chat changes
   useEffect(() => {
     if (activeChat) {
@@ -72,7 +72,7 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
         setChats((prev) => [data.chat, ...prev])
         setActiveChat(data.chat.id)
         setMessages([])
-        setSidebarOpen(false)
+        toggle()
       }
     } catch (error) {
       console.error("Error creating chat:", error)
@@ -103,7 +103,7 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
 
   const switchChat = (chatId: string): void => {
     setActiveChat(chatId)
-    setSidebarOpen(false)
+    toggle()
   }
 
   const sendMessage = async (content: string, selectedModel: string): Promise<void> => {
@@ -187,10 +187,10 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
     }
   }
 
-  const currentChat = chats.find((chat) => chat.id === activeChat)
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex  bg-background  ">
+   
       {/* Desktop Sidebar */}
       <div className="hidden md:block fixed left-0 top-0 bottom-0 w-64 z-20">
         <ChatSidebar
@@ -203,9 +203,11 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
       </div>
 
       {/* Mobile Sidebar */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+      <Sheet open={isOpen}  onOpenChange={()=>{toggle()}}>
+        {/* <button onClick={()=>{setSidebarOpen(true)}}>cliidkjfd</button> */}
         <SheetContent side="left" className="p-0 w-[85vw] sm:w-64">
           <ChatSidebar
+      
             chats={chats}
             activeChat={activeChat}
             onChatSelect={switchChat}
@@ -216,12 +218,12 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
       </Sheet>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen md:ml-64">
-        <div className="flex-shrink-0">
-          <ChatHeader title={currentChat?.title || "New Chat"} onOpenSidebar={() => setSidebarOpen(true)} />
+      <main className="flex-1 flex flex-col h-screen  md:ml-64">
+        <div className="">
+          {/* <ChatHeader title={currentChat?.title || "New Chat"} onOpenSidebar={() => setSidebarOpen(true)} /> */}
         </div>
 
-        <div className="flex-1 overflow-hidden relative">
+        <div className="flex-1 sm:mb-16 mb-24 relative">
           <MessageList
             messages={messages}
             loading={loading}
@@ -230,10 +232,12 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
           />
         </div>
 
-        <div className="flex-shrink-0">
+        <div className="fixed bottom-0 sm:w-3/4 w-full  ">
           <ChatInput onSendMessage={sendMessage} loading={loading} />
         </div>
       </main>
     </div>
   )
 }
+
+

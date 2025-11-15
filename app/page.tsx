@@ -80,7 +80,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="pt-14">
+    <div className="w-full">
       <ChatClient
         initialChats={chats}
         initialMessages={messages}

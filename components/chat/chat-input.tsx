@@ -79,19 +79,7 @@ export function ChatInput({ onSendMessage, loading }: ChatInputProps) {
           </div>
         </form>
         
-        <div className="flex items-center justify-between mt-2 px-4">
-          <p className="text-xs text-muted-foreground">
-            ChatGPT can make mistakes. Consider checking important information.
-          </p>
-          {selectedModel && (
-            <div className="flex items-center space-x-2">
-              <Bot className="h-3 w-3 text-muted-foreground" />
-              <Badge variant="outline" className="text-xs">
-                {selectedModel.speed}
-              </Badge>
-            </div>
-          )}
-        </div>
+        
       </div>
     </div>
   )

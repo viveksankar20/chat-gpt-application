@@ -18,7 +18,7 @@ interface ChatSidebarProps {
 export function ChatSidebar({ chats, activeChat, onChatSelect, onNewChat, onDeleteChat }: ChatSidebarProps) {
   return (
     <div className="flex flex-col h-full bg-muted/30 border-r">
-      <div className="flex-shrink-0 p-4 border-b">
+      <div className="flex-shrink-0  mt-12 p-4 border-b">
         <Button
           onClick={onNewChat}
           className="w-full"
@@ -82,7 +82,7 @@ export function ChatSidebar({ chats, activeChat, onChatSelect, onNewChat, onDele
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="opacity-0 group-hover:opacity-100 h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                    className=""
                     onClick={(e) => {
                       e.stopPropagation()
                       onDeleteChat(chat.id)
