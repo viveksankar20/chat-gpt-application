@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { ChatService } from "@/lib/chat-service"
 import { connectDB } from "@/lib/mongoose"
 import { Chat } from "@/models/chat.model"
@@ -13,7 +13,7 @@ export async function GET(
   { params }: { params: { chatId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session: any = await getServerSession(authOptions as any)
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -56,7 +56,7 @@ export async function POST(
   { params }: { params: { chatId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session: any = await getServerSession(authOptions as any)
     
     if (!session?.user?.id) {
       return NextResponse.json(

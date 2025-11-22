@@ -5,6 +5,7 @@ import "./globals.css"
 import { Navigation } from "@/components/navigation"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/components/providers/session-provider"
+  import { ToastContainer } from 'react-toastify';
 
 // Optimize font loading with display swap
 const inter = Inter({ 
@@ -34,6 +35,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <ThemeProvider>
+            <ToastContainer/>
             <Navigation />
             {children}
           </ThemeProvider>

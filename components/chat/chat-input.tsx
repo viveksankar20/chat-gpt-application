@@ -15,16 +15,16 @@ interface ChatInputProps {
 }
 
 const MODEL_OPTIONS = [
-  { value: 'deepseek-r1-distill-llama-70b', label: 'DeepSeek R1 (70B)', speed: 'Fast' },
+  // { value: 'deepseek-r1-distill-llama-70b', label: 'DeepSeek R1 (70B)', speed: 'Fast' },
   { value: 'meta-llama/llama-4-scout-17b-16e-instruct', label: 'Llama 4 Scout (17B)', speed: 'Medium' },
   { value: 'llama-3.3-70b-versatile', label: 'Llama 3.3 (70B)', speed: 'Fast' },
-  { value: 'gemma2-9b-it', label: 'Gemma2 (9B)', speed: 'Very Fast' },
-  { value: 'qwen-qwq-32b', label: 'Qwen (32B)', speed: 'Medium' },
+  // { value: 'gemma2-9b-it', label: 'Gemma2 (9B)', speed: 'Very Fast' },
+  // { value: 'qwen-qwq-32b', label: 'Qwen (32B)', speed: 'Medium' },
 ]
 
 export function ChatInput({ onSendMessage, loading }: ChatInputProps) {
   const [input, setInput] = useState("")
-  const [model, setModel] = useState('deepseek-r1-distill-llama-70b')
+  const [model, setModel] = useState('meta-llama/llama-4-scout-17b-16e-instruct')
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -35,7 +35,6 @@ export function ChatInput({ onSendMessage, loading }: ChatInputProps) {
     setInput("")
   }
 
-  const selectedModel = MODEL_OPTIONS.find(m => m.value === model)
 
   return (
     <div className="sticky bottom-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">

@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { ChatSidebar } from "./chat-sidebar"
-import { ChatHeader } from "./chat-header"
 import { MessageList } from "./message-list"
 import { ChatInput } from "./chat-input"
 import type { Chat, Message } from "@/types/chat"
 import { useZustand } from "@/hooks/zustand"
+import { toast } from "react-toastify"
 
 interface ChatClientProps {
   initialChats: Chat[]
@@ -20,15 +20,14 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
   const [activeChat, setActiveChat] = useState<string | null>(initialActiveChat)
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [loading, setLoading] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const {isOpen,close,open,toggle}=useZustand()
+  const {isOpen,toggle}=useZustand()
   // Model selection state
-  const models = [
-    'deepseek-r1-distill-llama-70b',
-    'meta-llama/llama-4-scout-17b-16e-instruct',
-    'gpt-3.5-turbo',
-    'gpt-4o',
-  ]
+  // const models = [
+  //   'deepseek-r1-distill-llama-70b',
+  //   'meta-llama/llama-4-scout-17b-16e-instruct',
+  //   'gpt-3.5-turbo',
+  //   'gpt-4o',
+  // ]
   // Load messages when active chat changes
   useEffect(() => {
     if (activeChat) {
@@ -72,15 +71,17 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
         setChats((prev) => [data.chat, ...prev])
         setActiveChat(data.chat.id)
         setMessages([])
-        toggle()
+        // toggle()
       }
     } catch (error) {
+      toast.error("Error creating chat")
       console.error("Error creating chat:", error)
     }
   }
 
   const deleteChat = async (chatId: string): Promise<void> => {
     try {
+     
       const response = await fetch(`/api/chats/${chatId}`, {
         method: "DELETE",
       })
@@ -96,21 +97,21 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
           }
         }
       }
+      toast.success("chat deleted successfully")
     } catch (error) {
+      toast.error("Error deleting chat")
       console.error("Error deleting chat:", error)
     }
   }
 
   const switchChat = (chatId: string): void => {
     setActiveChat(chatId)
-    toggle()
+    // toggle()
   }
 
   const sendMessage = async (content: string, selectedModel: string): Promise<void> => {
-    if (loading) return
-
+    // if (loading) return
     setLoading(true)
-
     try {
       let chatId = activeChat
 
@@ -144,15 +145,22 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
         body: JSON.stringify({ content, model: selectedModel }),
       })
       const data = await response.json()
-      if (data.success && data.userMessage && data.assistantMessage) {
-        setMessages((prev) => [...prev, data.userMessage, data.assistantMessage])
-        loadChats() // Reload chats to update the title if it changed
-      }
-    } catch (error) {
-      console.error("Error sending message:", error)
-    } finally {
-      setLoading(false)
+    if (data.success && data.userMessage && data.assistantMessage) {
+      setMessages((prev) => [...prev, data.userMessage, data.assistantMessage])
+      loadChats() // Reload chats to update the title if it changed
     }
+    else if(!data.success){
+    toast.error(data.error.error.error.message)
+
+    }
+    console.log(data)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    toast.error(message)
+    console.error("Error sending message:", error)
+  } finally {
+    setLoading(false)
+  }
   }
 
   const editMessage = async (messageId: string, content: string): Promise<void> => {
@@ -187,6 +195,40 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
     }
   }
 
+
+  // Load chats + latest chat messages on first load
+useEffect(() => {
+  const init = async () => {
+    try {
+      // 1. Load all chats
+      const response = await fetch("/api/chats");
+      const data = await response.json();
+
+      if (data.success && data.chats.length > 0) {
+        setChats(data.chats);
+
+        // 2. Select the latest chat automatically
+        const latestChat = data.chats[0];
+        setActiveChat(latestChat.id);
+
+        // 3. Load its messages
+        const messageRes = await fetch(`/api/chats/${latestChat.id}`);
+        const messageData = await messageRes.json();
+
+        if (messageData.success && messageData.messages) {
+          setMessages(messageData.messages);
+        }
+      } else {
+        // No chats? Create a new one automatically
+        await createNewChat();
+      }
+    } catch (error) {
+      console.error("Error initializing chat:", error);
+    }
+  };
+
+  init();
+}, []);
 
   return (
     <div className="flex  bg-background  ">

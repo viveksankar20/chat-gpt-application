@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import React, { useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
@@ -21,11 +21,17 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
   const [editContent, setEditContent] = useState(message.content)
   const [copied, setCopied] = useState(false)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
-
+const [loading,setLoading]=useState(false)
   const handleSave = () => {
     onEdit(message.id, editContent)
     setIsEditing(false)
   }
+
+const deleteChat =async(id:string)=>{
+setLoading(true)
+await onDelete(id)
+setLoading(false)
+}
 
   const handleCancel = () => {
     setEditContent(message.content)
@@ -50,6 +56,23 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
     } catch (err) {
       console.error("Failed to copy code: ", err)
     }
+  }
+
+  // Helper function to extract text from React children
+  const extractTextFromChildren = (children: React.ReactNode): string => {
+    if (typeof children === 'string') {
+      return children
+    }
+    if (typeof children === 'number') {
+      return String(children)
+    }
+    if (Array.isArray(children)) {
+      return children.map(extractTextFromChildren).join('')
+    }
+    if (children && typeof children === 'object' && 'props' in children) {
+      return extractTextFromChildren(children.props.children)
+    }
+    return ''
   }
 
   return (
@@ -107,15 +130,18 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
                           </code>
                         )
                       }
+                      // Try to get raw code from node first, fallback to extracting from children
+                      // @ts-ignore
+                      const codeText = node?.value || extractTextFromChildren(children)
                       return (
                         <div className="relative group/code">
                           <Button
                             variant="ghost"
                             size="sm"
                             className="absolute right-2 top-2 h-8 w-8 p-0 opacity-0 group-hover/code:opacity-100 transition-opacity"
-                            onClick={() => copyCodeToClipboard(String(children))}
+                            onClick={() => copyCodeToClipboard(codeText)}
                           >
-                            {copiedCode === String(children) ? (
+                            {copiedCode === codeText ? (
                               <Check className="h-4 w-4 text-green-500" />
                             ) : (
                               <Copy className="h-4 w-4" />
@@ -170,8 +196,8 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
                 <p>Are you sure you want to delete this message? This action cannot be undone.</p>
                 <div className="flex justify-end space-x-2 mt-4">
                   <Button variant="outline">Cancel</Button>
-                  <Button variant="destructive" onClick={() => onDelete(message.id)}>
-                    Delete
+                  <Button variant="destructive" onClick={() => deleteChat(message.id)}>
+                  {loading?"Loading":"Delete"}  
                   </Button>
                 </div>
               </DialogContent>
