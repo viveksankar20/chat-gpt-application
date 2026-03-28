@@ -30,13 +30,11 @@ interface GroqResponse {
 }
 
 const AVAILABLE_MODELS = [
-  { value: 'deepseek-r1-distill-llama-70b', label: 'DeepSeek R1 Distill (70B)', speed: 'Fast' },
-  { value: 'meta-llama/llama-4-scout-17b-16e-instruct', label: 'Llama 4 Scout (17B)', speed: 'Medium' },
   { value: 'llama-3.3-70b-versatile', label: 'Llama 3.3 (70B Versatile)', speed: 'Fast' },
+  { value: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B', speed: 'Fast' },
+  { value: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B (Instant)', speed: 'Very Fast' },
   { value: 'gemma2-9b-it', label: 'Gemma2 (9B)', speed: 'Very Fast' },
   { value: 'qwen-qwq-32b', label: 'Qwen (32B)', speed: 'Medium' },
-  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', speed: 'Fast' },
-  { value: 'gpt-4o', label: 'GPT-4o', speed: 'Medium' },
 ]
 
 const CODE_SYSTEM_PROMPTS = {
@@ -49,7 +47,7 @@ const CODE_SYSTEM_PROMPTS = {
 export function GroqTester() {
   const [message, setMessage] = useState("")
   const [systemPrompt, setSystemPrompt] = useState(CODE_SYSTEM_PROMPTS["Complete Code"])
-  const [model, setModel] = useState("deepseek-r1-distill-llama-70b")
+  const [model, setModel] = useState("llama-3.3-70b-versatile")
   const [temperature, setTemperature] = useState(0.7)
   const [maxTokens, setMaxTokens] = useState(4096)
   const [loading, setLoading] = useState(false)

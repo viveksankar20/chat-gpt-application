@@ -4,6 +4,7 @@ import { ChatService } from "@/lib/chat-service"
 import { connectDB } from "@/lib/mongoose"
 import { Chat } from "@/models/chat.model"
 import { authOptions } from "../../../auth/[...nextauth]/route"
+import { rateLimiterMiddleware } from "../../../../../backend/middlewares/rateLimiter"
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'

@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { 
       message, 
-      model = 'deepseek-r1-distill-llama-70b',
+      model = 'llama-3.3-70b-versatile',
       temperature = 0.7,
       maxTokens = 4096,
       systemPrompt = "You are a helpful AI assistant. When providing code, always provide the complete code without truncation. If the code is long, make sure to include all necessary parts including closing tags, brackets, and complete functions."

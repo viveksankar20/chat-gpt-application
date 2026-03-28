@@ -54,5 +54,9 @@ const messageSchema = new mongoose.Schema<IMessage>(
   }
 );
 
+// Feature 7: Database Improvements - Optimize queries with indexing
+chatSchema.index({ userId: 1, updatedAt: -1 });
+messageSchema.index({ chatId: 1, createdAt: 1 });
+
 export const Chat = mongoose.models.Chat || mongoose.model<IChat>('Chat', chatSchema);
 export const Message = mongoose.models.Message || mongoose.model<IMessage>('Message', messageSchema);

@@ -40,9 +40,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { title = "New Chat" } = body
+    const { title, firstMessage } = body
 
-    const chat = await ChatService.createChat(title, session.user.id)
+    let chatTitle = title || "New Chat"
+    if (!title && firstMessage) {
+      chatTitle = firstMessage.length > 40 
+        ? firstMessage.substring(0, 40).trim() + "..." 
+        : firstMessage.trim()
+    }
+
+    const chat = await ChatService.createChat(chatTitle, session.user.id)
     return NextResponse.json({ success: true, chat })
   } catch (error) {
     console.error("Error creating chat:", error)

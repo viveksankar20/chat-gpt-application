@@ -1,7 +1,7 @@
 import { connectDB } from "@/lib/mongoose"
 import { Chat, Message, type IChat, type IMessage } from "@/models/chat.model"
 import type { Chat as ChatType, Message as MessageType } from "@/types/chat"
-import { streamGroqChatCompletion, GroqChatMessage } from "@/lib/ai"
+import { orchestrate } from "../backend/services/orchestrator.service"
 
 // Utility to strip <think>...</think> tags from model output
 function stripThinkTags(content: string): string {
@@ -15,7 +15,7 @@ export class ChatService {
     const chats = await Chat.find({ userId }).sort({ updatedAt: -1 }).lean<IChat[]>()
 
     const chatsWithMessageCount = await Promise.all(
-      chats.map(async (chat) => {
+      chats.map(async (chat: any) => {
         const messageCount = await Message.countDocuments({ chatId: chat._id })
         return {
           id: chat._id.toString(),
@@ -110,45 +110,89 @@ export class ChatService {
   static async createAssistantMessage(chatId: string, userContent: string, model?: string): Promise<MessageType> {
     await connectDB()
 
-    // Get conversation history
-    const previousMessages = await Message.find({ chatId })
-      .sort({ createdAt: 1 })
+    // Last 10 messages in chronological order (newest window, not oldest 10 in thread)
+    const recentDesc = await Message.find({ chatId })
+      .sort({ createdAt: -1 })
+      .limit(10)
       .lean<IMessage[]>()
+    const chronological = recentDesc.slice().reverse()
 
-    // Convert to Groq message format
-    const groqMessages: GroqChatMessage[] = previousMessages.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    }))
-    // Add the new user message
-    groqMessages.push({ role: "user", content: userContent })
+    const conversationText = chronological
+      .map((m: IMessage) => `${m.role.toUpperCase()}: ${m.content}`)
+      .join("\n")
 
-    // Get AI response (stream and collect)
-    const stream = await streamGroqChatCompletion({ messages: groqMessages, model })
-    let assistantContent = ""
-    for await (const chunk of stream) {
-      assistantContent += chunk.choices[0]?.delta?.content || ''
-    }
+    // Avoid duplicating the latest user line: it is already the last line in conversationText
+    const finalPrompt = conversationText.trim()
+      ? `Conversation (most recent messages):\n${conversationText}\n\nRespond as the assistant.`
+      : userContent
 
-    // Strip <think>...</think> tags
-    const cleanContent = stripThinkTags(assistantContent)
+    // Use the new production orchestrator (Features 1,2,4,5,6,8)
+    const orchestratorResult = await orchestrate(finalPrompt, { 
+       modelId: model, 
+       mode: model ? 'advanced' : 'smart' 
+    });
+
+    const cleanContent = stripThinkTags(orchestratorResult.response)
 
     // Save assistant response
     const assistantMessage = new Message({
       chatId,
       role: "assistant",
-      content: cleanContent,
+      content: String(cleanContent), // Force string conversion to prevent [object Object]
     })
+    
     await assistantMessage.save()
 
     // Update chat's updatedAt
-    await Chat.findByIdAndUpdate(chatId, { updatedAt: new Date() })
+    await Chat.findByIdAndUpdate(chatId, { 
+      updatedAt: new Date(),
+      // Auto-generate title if it's currently "New Chat" and this is the first assistant response
+      // (Optionally do this in createChat or here)
+    })
 
     return {
       id: assistantMessage._id.toString(),
       role: assistantMessage.role,
-      content: cleanContent,
+      content: String(cleanContent),
       createdAt: assistantMessage.createdAt.toISOString(),
+      isCached: orchestratorResult.isCached
     }
+  }
+
+  static async deleteChat(chatId: string): Promise<boolean> {
+    await connectDB()
+    try {
+      // Delete all messages associated with the chat
+      await Message.deleteMany({ chatId })
+      // Delete the chat itself
+      const result = await Chat.findByIdAndDelete(chatId)
+      return !!result
+    } catch (error) {
+      console.error("Error deleting chat:", error)
+      return false
+    }
+  }
+
+  static async updateMessage(messageId: string, content: string): Promise<MessageType | null> {
+    await connectDB()
+    const updated = await Message.findByIdAndUpdate(
+      messageId,
+      { content: String(content) },
+      { new: true }
+    )
+    if (!updated) return null
+
+    return {
+      id: updated._id.toString(),
+      role: updated.role,
+      content: updated.content,
+      createdAt: updated.createdAt.toISOString(),
+    }
+  }
+
+  static async updateChatTitle(chatId: string, title: string): Promise<boolean> {
+    await connectDB()
+    const result = await Chat.findByIdAndUpdate(chatId, { title })
+    return !!result
   }
 }

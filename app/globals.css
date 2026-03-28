@@ -96,37 +96,37 @@
   background-color: rgb(107 114 128);
 }
 
-/* Prose improvements for better readability */
+/* Prose improvements for better readability (ChatGPT-like) */
 .prose {
   @apply max-w-none;
 }
 
 .prose p {
-  @apply text-foreground leading-relaxed mb-4;
+  @apply text-foreground leading-relaxed mb-4 last:mb-0;
 }
 
 .prose code {
-  @apply text-sm bg-muted text-foreground px-1.5 py-0.5 rounded font-mono border;
+  @apply text-[13px] bg-muted text-foreground px-1.5 py-0.5 rounded font-mono border border-border;
 }
 
 .prose pre {
-  @apply bg-muted border p-4 rounded-lg overflow-x-auto mb-4;
+  @apply bg-transparent border-0 p-0 m-0 overflow-visible;
 }
 
 .prose pre code {
-  @apply text-foreground bg-transparent p-0 border-0;
+  @apply text-foreground bg-transparent p-0 border-0 text-sm leading-relaxed;
 }
 
 .prose ul {
-  @apply mb-4 space-y-2;
+  @apply mb-4 space-y-2 list-disc pl-5;
 }
 
 .prose ol {
-  @apply mb-4 space-y-2;
+  @apply mb-4 space-y-2 list-decimal pl-5;
 }
 
 .prose li {
-  @apply text-foreground;
+  @apply text-foreground pl-1;
 }
 
 .prose h1,
@@ -135,19 +135,19 @@
 .prose h4,
 .prose h5,
 .prose h6 {
-  @apply text-foreground font-semibold mb-3 mt-6;
+  @apply text-foreground font-semibold mb-4 mt-8 first:mt-0;
 }
 
 .prose h1 {
-  @apply text-2xl;
+  @apply text-3xl;
 }
 
 .prose h2 {
-  @apply text-xl;
+  @apply text-2xl border-b border-border pb-2;
 }
 
 .prose h3 {
-  @apply text-lg;
+  @apply text-xl;
 }
 
 .prose blockquote {

@@ -11,9 +11,10 @@ interface MessageListProps {
   loading: boolean
   onEditMessage: (messageId: string, content: string) => void
   onDeleteMessage: (messageId: string) => void
+  onScroll?: (e: React.UIEvent<HTMLDivElement>) => void
 }
 
-export function MessageList({ messages, loading, onEditMessage, onDeleteMessage }: MessageListProps) {
+export function MessageList({ messages, loading, onEditMessage, onDeleteMessage, onScroll }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export function MessageList({ messages, loading, onEditMessage, onDeleteMessage 
   }, [messages, loading])
 
   return (
-    <div className="absolute inset-0 overflow-y-auto">
+    <div className="absolute inset-0 overflow-y-auto" onScroll={onScroll}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-8">
