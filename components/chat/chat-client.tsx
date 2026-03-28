@@ -99,6 +99,7 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
         setChats((prev) => [data.chat, ...prev])
         setActiveChat(data.chat.id)
         setMessages([])
+        if (isOpen) toggle()
         router.push(`/${data.chat.id}`)
       }
     } catch (error) {
@@ -144,6 +145,7 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
 
   const switchChat = (chatId: string): void => {
     setActiveChat(chatId)
+    if (isOpen) toggle()
     router.push(`/${chatId}`)
   }
 
@@ -343,10 +345,19 @@ useEffect(() => {
 
       if (data.success && data.chats.length > 0) {
         setChats(data.chats);
-        const latestChat = data.chats[0];
-        setActiveChat(latestChat.id);
-        router.replace(`/${latestChat.id}`);
-        const messageRes = await fetch(`/api/chats/${latestChat.id}`);
+        
+        let targetId = initialActiveChat;
+        if (!targetId || !data.chats.some((c: Chat) => c.id === targetId)) {
+          targetId = data.chats[0].id;
+        }
+        
+        setActiveChat(targetId);
+        
+        if (targetId !== initialActiveChat) {
+          router.replace(`/${targetId}`);
+        }
+        
+        const messageRes = await fetch(`/api/chats/${targetId}`);
         const messageData = await messageRes.json();
         if (messageData.success && messageData.messages) {
           setMessages(messageData.messages);
