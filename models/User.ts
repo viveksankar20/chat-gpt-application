@@ -28,6 +28,19 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  themePreference: {
+    type: String,
+    enum: ['light', 'dark', 'system'],
+    default: 'system'
+  },
+  defaultModel: {
+    type: String,
+    default: 'Llama 4 Scout (17B)'
+  },
+  autoScroll: {
+    type: Boolean,
+    default: true
+  },
   role: {
     type: String,
     enum: ['user', 'admin'],

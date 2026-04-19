@@ -54,6 +54,8 @@ export async function GET(
       id: msg._id.toString(),
       role: msg.role,
       content: msg.content,
+      type: msg.type,
+      metadata: msg.metadata,
       createdAt: msg.createdAt.toISOString(),
     }))
 

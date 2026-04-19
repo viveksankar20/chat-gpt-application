@@ -1,18 +1,10 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
 import "./globals.css"
+import { ToastContainer } from "react-toastify"
 import { Navigation } from "@/components/navigation"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/components/providers/session-provider"
-  import { ToastContainer } from 'react-toastify';
-
-// Optimize font loading with display swap
-const inter = Inter({ 
-  subsets: ["latin"],
-  display: 'swap',
-  preload: true,
-})
 
 export const metadata: Metadata = {
   title: "Nexus AI",
@@ -32,10 +24,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body>
         <AuthProvider>
           <ThemeProvider>
-            <ToastContainer/>
+            <ToastContainer />
             <Navigation />
             {children}
           </ThemeProvider>

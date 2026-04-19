@@ -13,6 +13,8 @@ export interface IMessage {
   chatId: mongoose.Types.ObjectId;
   role: 'user' | 'assistant';
   content: string;
+  type?: 'text' | 'compare' | 'ecommerce';
+  metadata?: any;
   createdAt: Date;
 }
 
@@ -46,7 +48,15 @@ const messageSchema = new mongoose.Schema<IMessage>(
     },
     content: {
       type: String,
-      required: true,
+      required: false,
+    },
+    type: {
+      type: String,
+      enum: ['text', 'compare', 'ecommerce'],
+      default: 'text',
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
     },
   },
   {

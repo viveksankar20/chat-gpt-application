@@ -4,6 +4,12 @@ import { getCapabilityForIntent } from "../../../../backend/services/modelSelect
 import { providerRegistry } from "../../../../backend/services/providerRegistry"
 import { modelConfigs } from "../../../../backend/services/models.config"
 import { rankResponses, ResponseItem } from "../../../../backend/services/ranking.service"
+import { ChatService } from '@/lib/chat-service';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../auth/[...nextauth]/route";
+import { connectDB } from "@/lib/mongoose";
+import { Chat } from "@/models/chat.model";
+import type { ProviderName } from "../../../../backend/services/modelSelector.service";
 
 function selectModelsForCapability(capability: string, count: number = 3): Array<{ modelId: string; provider: string }> {
   // Get all free models with this capability, sorted by priority
@@ -17,14 +23,30 @@ function selectModelsForCapability(capability: string, count: number = 3): Array
 
 export async function POST(req: NextRequest) {
   try {
+    const session: any = await getServerSession(authOptions as any);
+    if (!session?.user?.id) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), { status: 401 });
+    }
+
     const body = await req.json()
     const prompt = body.prompt?.toString()?.trim() ?? ""
+    const chatId = body.chatId
 
     if (!prompt) {
       return new Response(JSON.stringify({ success: false, error: "Prompt is required" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       })
+    }
+
+    if (!chatId) {
+      return new Response(JSON.stringify({ success: false, error: "chatId is required to save history" }), { status: 400 });
+    }
+
+    await connectDB();
+    const chat = await Chat.findById(chatId);
+    if (!chat || chat.userId !== session.user.id) {
+      return new Response(JSON.stringify({ success: false, error: "Chat not found or Unauthorized" }), { status: 403 });
     }
 
     const intent = detectIntent(prompt)
@@ -50,7 +72,7 @@ export async function POST(req: NextRequest) {
     const promises = selectedModels.map(async ({ modelId, provider }) => {
       const modelStart = Date.now()
       try {
-        const service = providerRegistry[provider]
+        const service = providerRegistry[provider as ProviderName]
         const response = await service.generateResponse(prompt, modelId)
         const timeMs = Date.now() - modelStart
 
@@ -98,6 +120,10 @@ export async function POST(req: NextRequest) {
 
     console.log('[api/ai/compare] completed in', totalTime, 'ms')
 
+    // Save history
+    const userMessage = await ChatService.createUserMessage(chatId, prompt);
+    const assistantMessage = await ChatService.createMetadataMessage(chatId, 'assistant', '', 'compare', { responses: rankedResponses });
+
     return new Response(JSON.stringify({
       success: true,
       data: {
@@ -105,7 +131,9 @@ export async function POST(req: NextRequest) {
         capability,
         responses: rankedResponses,
         totalTimeMs: totalTime,
-      }
+      },
+      userMessage,
+      assistantMessage
     }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

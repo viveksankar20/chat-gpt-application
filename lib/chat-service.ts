@@ -43,6 +43,8 @@ export class ChatService {
       id: msg._id.toString(),
       role: msg.role,
       content: msg.content,
+      type: msg.type,
+      metadata: msg.metadata,
       createdAt: msg.createdAt.toISOString(),
     }))
   }
@@ -153,6 +155,31 @@ export class ChatService {
       content: String(cleanContent),
       createdAt: assistantMessage.createdAt.toISOString(),
       isCached: orchestratorResult.isCached
+    }
+  }
+
+  static async createMetadataMessage(chatId: string, role: 'user' | 'assistant', content: string, type: 'compare' | 'ecommerce', metadata: any): Promise<MessageType> {
+    await connectDB()
+
+    const message = new Message({
+      chatId,
+      role,
+      content,
+      type,
+      metadata,
+    })
+    
+    await message.save()
+
+    await Chat.findByIdAndUpdate(chatId, { updatedAt: new Date() })
+
+    return {
+      id: message._id.toString(),
+      role: message.role,
+      content: message.content,
+      type: message.type,
+      metadata: message.metadata,
+      createdAt: message.createdAt.toISOString(),
     }
   }
 

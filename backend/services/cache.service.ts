@@ -53,7 +53,7 @@ export class CacheService {
    */
   static sweep(): void {
     const now = Date.now();
-    for (const [key, item] of memoryCache.entries()) {
+    for (const [key, item] of Array.from(memoryCache.entries())) {
       if (now > item.expiresAt) {
         memoryCache.delete(key);
       }

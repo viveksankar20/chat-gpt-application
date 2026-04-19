@@ -1,7 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import { useSession, signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
+import { LogIn, LogOut, Menu, MessageSquare, PanelRightClose, PanelRightOpen, TestTube, User, UserPlus, X } from "lucide-react"
+import { useZustand } from "@/hooks/zustand"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -14,47 +17,41 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  TestTube,
-  MessageSquare,
-  Settings,
-  User,
-  LogOut,
-  LogIn,
-  UserPlus,
-  Menu,
-  X
-} from "lucide-react"
-import { useState } from "react"
-import { useZustand } from "@/hooks/zustand"
-import { PanelRightClose ,PanelRightOpen} from 'lucide-react';
+
 export function Navigation() {
   const { data: session, status } = useSession()
-  const [isOpens, setIsOpen] = useState(false)
-const {isOpen,toggle}=useZustand()
+  const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false)
+  const { isOpen, toggle } = useZustand()
+
   const handleSignOut = () => {
     signOut({ callbackUrl: "/auth/signin" })
   }
-console.log(isOpen)
+
   return (
     <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="px-2 flex h-14 items-center">
-        
-        {/* Left Section */}
-        <div className="flex items-center sm:space-x-4 space-x-2">
-          <Link href="/" className="flex items-center space-x-2">
-            <MessageSquare className="h-6 sm:block hidden w-6 text-primary" />
-            {isOpen?<PanelRightClose className="h-6 sm:hidden block  w-6 text-primary" onClick={()=>{toggle()}}/>:<PanelRightOpen className="h-6 sm:hidden block w-6 text-primary" onClick={()=>{toggle()}}/>}
-            <span className="sm:text-xl text-lg font-bold">Nexus AI</span>
-          </Link>
-          <Separator orientation="vertical" className="h-6 hidden sm:flex" />
-          <Badge variant="secondary" className="text-xs hidden sm:flex">
+      <div className="flex h-14 items-center px-2">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="flex items-center space-x-2">
+            <MessageSquare className="hidden h-6 w-6 text-primary sm:block" />
+            <button
+              type="button"
+              className="inline-flex items-center sm:hidden"
+              onClick={toggle}
+              aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
+            >
+              {isOpen ? <PanelRightClose className="h-6 w-6 text-primary" /> : <PanelRightOpen className="h-6 w-6 text-primary" />}
+            </button>
+            <Link href="/" className="flex items-center">
+              <span className="text-lg font-bold sm:text-xl">Nexus AI</span>
+            </Link>
+          </div>
+          <Separator orientation="vertical" className="hidden h-6 sm:flex" />
+          <Badge variant="secondary" className="hidden text-xs sm:flex">
             GROQ Powered
           </Badge>
         </div>
 
-        {/* Desktop Menu */}
-        <div className="ml-auto sm:flex hidden items-center space-x-2">
+        <div className="ml-auto hidden items-center space-x-2 sm:flex">
           <Link href="/groq-tester">
             <Button variant="outline" size="sm" className="flex items-center space-x-2">
               <TestTube className="h-4 w-4" />
@@ -63,7 +60,7 @@ console.log(isOpen)
           </Link>
 
           {status === "loading" ? (
-            <div className="h-9 w-20 bg-muted animate-pulse rounded-md" />
+            <div className="h-9 w-20 animate-pulse rounded-md bg-muted" />
           ) : session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -79,8 +76,6 @@ console.log(isOpen)
                     <p className="text-xs leading-none text-muted-foreground">{session.user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-               
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
@@ -108,22 +103,22 @@ console.log(isOpen)
           <ThemeToggle />
         </div>
 
-        {/* Mobile Menu Button */}
-        <div className="ml-auto sm:hidden flex items-center">
+        <div className="ml-auto flex items-center sm:hidden">
           <ThemeToggle />
           <button
-            className="ml-2 p-2 rounded-md border"
-            onClick={() => setIsOpen(!isOpens)}
+            type="button"
+            className="ml-2 rounded-md border p-2"
+            onClick={() => setIsOpenMobileMenu((prev) => !prev)}
+            aria-label={isOpenMobileMenu ? "Close menu" : "Open menu"}
           >
-            {isOpens ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isOpenMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Dropdown */}
-      {isOpens && (
-        <div className="sm:hidden border-t bg-background p-4 space-y-3">
-          <Button variant="outline" className="w-full flex items-center justify-start space-x-2 h-12" asChild>
+      {isOpenMobileMenu && (
+        <div className="space-y-3 border-t bg-background p-4 sm:hidden">
+          <Button variant="outline" className="h-12 w-full justify-start space-x-2" asChild>
             <Link href="/groq-tester">
               <TestTube className="h-5 w-5" />
               <span className="text-base">GROQ Tester</span>
@@ -131,26 +126,20 @@ console.log(isOpen)
           </Button>
 
           {session ? (
-            <>
-              <Button
-                onClick={handleSignOut}
-                variant="destructive"
-                className="w-full flex items-center justify-start space-x-2 h-12"
-              >
-                <LogOut className="h-5 w-5" />
-                <span className="text-base">Sign Out</span>
-              </Button>
-            </>
+            <Button onClick={handleSignOut} variant="destructive" className="h-12 w-full justify-start space-x-2">
+              <LogOut className="h-5 w-5" />
+              <span className="text-base">Sign Out</span>
+            </Button>
           ) : (
             <div className="flex flex-col space-y-3 pt-2">
-              <Button variant="outline" className="w-full flex items-center justify-start space-x-2 h-12" asChild>
+              <Button variant="outline" className="h-12 w-full justify-start space-x-2" asChild>
                 <Link href="/auth/signin">
                   <LogIn className="h-5 w-5" />
                   <span className="text-base">Sign In</span>
                 </Link>
               </Button>
 
-              <Button className="w-full flex items-center justify-start space-x-2 h-12" asChild>
+              <Button className="h-12 w-full justify-start space-x-2" asChild>
                 <Link href="/auth/signup">
                   <UserPlus className="h-5 w-5" />
                   <span className="text-base">Sign Up</span>
@@ -163,5 +152,3 @@ console.log(isOpen)
     </div>
   )
 }
-
-

@@ -2,6 +2,8 @@ export interface Message {
   id: string
   role: "user" | "assistant"
   content: string
+  type?: "text" | "compare" | "ecommerce"
+  metadata?: any
   createdAt: string
   isCached?: boolean
 }

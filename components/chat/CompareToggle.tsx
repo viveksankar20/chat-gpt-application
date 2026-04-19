@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
-import { Compare, MessageSquare } from 'lucide-react'
+import { Columns, MessageSquare } from 'lucide-react'
 
 interface CompareToggleProps {
   isCompareMode: boolean
@@ -20,7 +20,7 @@ export function CompareToggle({ isCompareMode, onToggle, disabled }: CompareTogg
     >
       {isCompareMode ? (
         <>
-          <Compare className="w-4 h-4" />
+          <Columns className="w-4 h-4" />
           Compare Mode
           <Badge variant="secondary" className="ml-1 text-xs">
             3 Models
