@@ -5,10 +5,15 @@ import { togetherService } from './providers/together.service'
 import { huggingFaceService } from './providers/huggingface.service'
 import { openRouterService } from './providers/openrouter.service'
 
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+}
+
 export interface ProviderService {
   providerName: ProviderName
-  generateResponse: (prompt: string, modelId?: string) => Promise<string>
-  generateStream?: (prompt: string, modelId?: string) => Promise<ReadableStream<string>>
+  generateResponse: (prompt: string, modelId?: string, messages?: ChatMessage[]) => Promise<string>
+  generateStream?: (prompt: string, modelId?: string, messages?: ChatMessage[]) => Promise<ReadableStream<string>>
 }
 
 export const providerRegistry: Record<ProviderName, ProviderService> = {

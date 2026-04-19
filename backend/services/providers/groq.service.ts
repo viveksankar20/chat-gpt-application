@@ -1,30 +1,10 @@
-// Groq provider abstraction. In production, this would call the real Groq endpoint.
+// Groq provider abstraction.
 // Add typing for process.env in environments where Node types are not globally injected.
 declare const process: { env: Record<string, string | undefined> }
 
-export const groqService = {
-  providerName: 'groq' as const,
+import type { ChatMessage } from '../providerRegistry'
 
-  async generateResponse(prompt: string, modelId?: string): Promise<string> {
-    console.log('[groq.service] generateResponse start, model:', modelId || 'default')
-
-    // Optional real API integration path using OPENAI_API_KEY/GROQ_API_KEY.
-    // (User is assigning the Groq key to OPENAI_API_KEY in .env)
-    const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY
-    if (apiKey) {
-      try {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: modelId || 'llama-3.3-70b-versatile',
-            messages: [
-              { 
-                role: 'system', 
-                content: `You are a highly capable AI assistant. 
+const SYSTEM_PROMPT = `You are a highly capable AI assistant. 
 Always format your responses using professional Markdown to ensure maximum clarity and readability.
 Follow these formatting rules strictly:
 1. Use # for the main title and ## or ### for subsections.
@@ -34,9 +14,33 @@ Follow these formatting rules strictly:
 5. Use tables for comparisons or structured data.
 6. Use blockquotes for important notes or warnings.
 7. Ensure proper spacing between paragraphs and sections with blank lines.`
-              },
+
+export const groqService = {
+  providerName: 'groq' as const,
+
+  async generateResponse(prompt: string, modelId?: string, messages?: ChatMessage[]): Promise<string> {
+    console.log('[groq.service] generateResponse start, model:', modelId || 'default')
+
+    const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY
+    if (apiKey) {
+      try {
+        // Build messages array: if history provided use it, otherwise fall back to single user message
+        const apiMessages = messages && messages.length > 0
+          ? [{ role: 'system', content: SYSTEM_PROMPT }, ...messages]
+          : [
+              { role: 'system', content: SYSTEM_PROMPT },
               { role: 'user', content: prompt }
-            ],
+            ]
+
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: modelId || 'llama-3.3-70b-versatile',
+            messages: apiMessages,
             max_tokens: 1024,
             temperature: 0.7
           })
@@ -68,12 +72,20 @@ Follow these formatting rules strictly:
     return mock
   },
   
-  async generateStream(prompt: string, modelId?: string): Promise<ReadableStream<string>> {
+  async generateStream(prompt: string, modelId?: string, messages?: ChatMessage[]): Promise<ReadableStream<string>> {
     console.log('[groq.service] generateStream start, model:', modelId || 'default')
     const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY
     if (!apiKey) {
       throw new Error('[groq.service] API key not configured for streaming')
     }
+
+    // Build messages array with conversation history
+    const apiMessages = messages && messages.length > 0
+      ? [{ role: 'system', content: SYSTEM_PROMPT }, ...messages]
+      : [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: prompt }
+        ]
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -83,22 +95,7 @@ Follow these formatting rules strictly:
       },
       body: JSON.stringify({
         model: modelId || 'llama-3.3-70b-versatile',
-        messages: [
-          { 
-            role: 'system', 
-            content: `You are a highly capable AI assistant. 
-Always format your responses using professional Markdown to ensure maximum clarity and readability.
-Follow these formatting rules strictly:
-1. Use # for the main title and ## or ### for subsections.
-2. Use **bold** for key terms and emphasis.
-3. Use bullet points or numbered lists for steps, features, or items.
-4. For code snippets, ALWAYS specify the language tag (e.g., \`\`\`typescript).
-5. Use tables for comparisons or structured data.
-6. Use blockquotes for important notes or warnings.
-7. Ensure proper spacing between paragraphs and sections with blank lines.`
-          },
-          { role: 'user', content: prompt }
-        ],
+        messages: apiMessages,
         max_tokens: 1024,
         temperature: 0.7,
         stream: true
@@ -110,7 +107,6 @@ Follow these formatting rules strictly:
       throw new Error(`[groq.service] streaming failed: ${response.status} ${text}`)
     }
 
-    const encoder = new TextEncoder()
     const decoder = new TextDecoder()
     
     return new ReadableStream({
@@ -146,7 +142,6 @@ Follow these formatting rules strictly:
                 const content = json.choices?.[0]?.delta?.content
                 if (content) {
                   controller.enqueue(content)
-                  // console.log('[groq.service] Enqueued chunk:', content) // Debug log
                 }
               } catch (e) {
                 console.warn('[groq.service] Error parsing stream chunk', e)

@@ -10,6 +10,17 @@ import { Bot, User, Copy, Check, Edit3, Save, X, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Message } from "@/types/chat"
 
+// Helper function to extract plain text from React nodes (used for copying code blocks)
+const extractText = (node: any): string => {
+  if (typeof node === "string") return node
+  if (typeof node === "number") return String(node)
+  if (Array.isArray(node)) return node.map(extractText).join("")
+  if (node && node.props && node.props.children) {
+    return extractText(node.props.children)
+  }
+  return ""
+}
+
 interface MessageItemProps {
   message: Message
   onEdit: (messageId: string, content: string) => void
@@ -208,7 +219,7 @@ export function MessageItem({ message, onEdit, onDelete }: MessageItemProps) {
                       }
 
                       const language = match ? match[1] : "code"
-                      const codeText = String(children).replace(/\n$/, "")
+                      const codeText = extractText(children).replace(/\n$/, "")
 
                       return (
                         <div className="my-4 rounded-lg overflow-hidden border border-border shadow-sm">

@@ -29,7 +29,7 @@ export function MessageList({ messages, loading, onEditMessage, onDeleteMessage,
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
               <Bot className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-semibold mb-2">Welcome to ChatGPT Clone!</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold mb-2">Welcome to Nexus AI!</h2>
             <p className="text-muted-foreground max-w-md text-sm sm:text-base mb-4">
               Just start typing below to begin a new conversation. I can help with questions, coding, writing, analysis, and much more.
             </p>

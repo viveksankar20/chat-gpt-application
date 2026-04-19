@@ -15,8 +15,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "ChatGPT Clone",
-  description: "A ChatGPT-like interface built with Next.js",
+  title: "Nexus AI",
+  description: "A high-performance AI chat interface powered by GROQ",
 }
 
 export const viewport: Viewport = {

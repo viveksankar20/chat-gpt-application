@@ -3,19 +3,26 @@
 
 declare const process: { env: Record<string, string | undefined> }
 
+import type { ChatMessage } from '../providerRegistry'
+
 export const huggingFaceService = {
   providerName: 'huggingface' as const,
 
-  async generateResponse(prompt: string, modelId?: string): Promise<string> {
+  async generateResponse(prompt: string, modelId?: string, messages?: ChatMessage[]): Promise<string> {
     console.log('[huggingface.service] generateResponse start model:', modelId)
 
     const apiKey = process.env.HUGGINGFACE_API_KEY
     const model = modelId || 'mistralai/Mistral-7B-Instruct'
 
+    // Build a flat prompt from conversation history for HuggingFace's text-generation format
+    const flatPrompt = messages && messages.length > 0
+      ? messages.map(m => `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}`).join('\n') + '\nAssistant:'
+      : prompt
+
     if (!apiKey) {
       // Fallback mock
       await new Promise((resolve) => setTimeout(resolve, 120))
-      return `HuggingFace mock [${model}]: ${prompt.slice(0, 280)}`
+      return `HuggingFace mock [${model}]: ${flatPrompt.slice(0, 280)}`
     }
 
     const url = `https://api-inference.huggingface.co/models/${model}`
@@ -27,7 +34,7 @@ export const huggingFaceService = {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ inputs: prompt, options: { wait_for_model: true } }),
+        body: JSON.stringify({ inputs: flatPrompt, options: { wait_for_model: true } }),
       })
 
       if (!res.ok) {

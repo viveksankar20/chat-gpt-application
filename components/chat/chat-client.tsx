@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { ChatSidebar } from "./chat-sidebar"
 import { MessageList } from "./message-list"
@@ -40,7 +40,6 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
   const [isCompareMode, setIsCompareMode] = useState(false)
   const [compareResponses, setCompareResponses] = useState<CompareResponse[]>([])
   const [compareLoading, setCompareLoading] = useState(false)
-  const [isInputVisible, setIsInputVisible] = useState(true)
   const [lastScrollTop, setLastScrollTop] = useState(0)
   
   // Feature 9: Frontend Improvements - Retry mechanics
@@ -186,23 +185,65 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
       }
 
       // Send the message to the chat
-      const response = await fetch(`/api/chats/${chatId}/messages`, {
+      const response = await fetch(`/api/chats/${chatId}/messages/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content, model: selectedModel }),
       })
-      const data = await response.json()
-    if (data.success && data.userMessage && data.assistantMessage) {
-      setMessages((prev) => [...prev, data.userMessage, data.assistantMessage])
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error?.error?.error?.message || errorData.error || "Failed to get response")
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) throw new Error("No response body")
+      
+      const userMessageId = response.headers.get('X-User-Message-Id') || Date.now().toString()
+      const userMessageCreatedAt = response.headers.get('X-User-Message-CreatedAt') || new Date().toISOString()
+      const isCached = response.headers.get('X-Is-Cached') === 'true'
+
+      // Optimistically add user message and an empty assistant message
+      const assistantMessageId = Date.now().toString()
+      
+      setMessages((prev) => [
+        ...prev, 
+        {
+          id: userMessageId,
+          role: "user",
+          content: content,
+          createdAt: userMessageCreatedAt
+        },
+        {
+          id: assistantMessageId,
+          role: "assistant",
+          content: "",
+          createdAt: new Date().toISOString(),
+          isCached: isCached
+        }
+      ])
+      
       setLastFailedMessage(null)
       loadChats() // Reload chats to update the title if it changed
-    }
-    else if(!data.success){
-      setLastFailedMessage(content)
-      setLastFailedModel(selectedModel)
-      toast.error(data.error?.error?.error?.message || data.error || "Failed to get response")
-    }
-    console.log(data)
+      
+      const decoder = new TextDecoder()
+      let streamContent = ""
+      
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        
+        streamContent += decoder.decode(value, { stream: true })
+        
+        // Update the assistant message in the UI progressively
+        setMessages((prev) => 
+          prev.map((msg) => 
+            msg.id === assistantMessageId 
+              ? { ...msg, content: streamContent }
+              : msg
+          )
+        )
+      }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     setLastFailedMessage(content)
@@ -317,18 +358,7 @@ export function ChatClient({ initialChats, initialMessages, initialActiveChat }:
   }
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    if (messages.length === 0) {
-      if (!isInputVisible) setIsInputVisible(true)
-      return
-    }
-    const currentScrollTop = e.currentTarget.scrollTop
-    // If scrolling up, hide input. If scrolling down or at bottom, show it.
-    if (currentScrollTop < lastScrollTop - 10) {
-      setIsInputVisible(false)
-    } else if (currentScrollTop > lastScrollTop + 10 || currentScrollTop <= 0) {
-      setIsInputVisible(true)
-    }
-    setLastScrollTop(currentScrollTop)
+    // Scroll handling for UI effects if needed in the future
   }
 
 
@@ -391,8 +421,11 @@ useEffect(() => {
 
       {/* Mobile Sidebar */}
       <Sheet open={isOpen}  onOpenChange={()=>{toggle()}}>
-        {/* <button onClick={()=>{setSidebarOpen(true)}}>cliidkjfd</button> */}
         <SheetContent side="left" className="p-0 w-[85vw] sm:w-64">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Chat Sidebar</SheetTitle>
+            <SheetDescription>Manage your conversations and settings</SheetDescription>
+          </SheetHeader>
           <ChatSidebar
             chats={chats}
             activeChat={activeChat}
@@ -462,7 +495,7 @@ useEffect(() => {
 
         <div className="flex-1 overflow-hidden pt-16 mt-0">
           {isCompareMode ? (
-            <div className="h-full p-4 overflow-y-auto" onScroll={handleScroll}>
+            <div className="h-full p-4 overflow-y-auto pb-32" onScroll={handleScroll}>
               {compareResponses.length > 0 ? (
                 <CompareView
                   responses={compareResponses}
@@ -497,10 +530,7 @@ useEffect(() => {
           )}
         </div>
 
-        <div className={cn(
-          "fixed bottom-0 left-0 right-0 md:left-64 flex flex-col items-center transition-transform duration-300 ease-in-out z-30",
-          isInputVisible ? "translate-y-0" : "translate-y-full"
-        )}>
+        <div className="fixed bottom-0 left-0 right-0 md:left-64 flex flex-col items-center z-30">
           {!isCompareMode ? (
             <div className="w-full max-w-4xl mx-auto flex flex-col items-center px-4 pb-4">
               {lastFailedMessage && (

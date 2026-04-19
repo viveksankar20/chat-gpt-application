@@ -117,19 +117,16 @@ export class ChatService {
       .lean<IMessage[]>()
     const chronological = recentDesc.slice().reverse()
 
-    const conversationText = chronological
-      .map((m: IMessage) => `${m.role.toUpperCase()}: ${m.content}`)
-      .join("\n")
-
-    // Avoid duplicating the latest user line: it is already the last line in conversationText
-    const finalPrompt = conversationText.trim()
-      ? `Conversation (most recent messages):\n${conversationText}\n\nRespond as the assistant.`
-      : userContent
+    const messages = chronological.map((m: IMessage) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content
+    }))
 
     // Use the new production orchestrator (Features 1,2,4,5,6,8)
-    const orchestratorResult = await orchestrate(finalPrompt, { 
+    const orchestratorResult = await orchestrate(userContent, { 
        modelId: model, 
-       mode: model ? 'advanced' : 'smart' 
+       mode: model ? 'advanced' : 'smart',
+       messages
     });
 
     const cleanContent = stripThinkTags(orchestratorResult.response)

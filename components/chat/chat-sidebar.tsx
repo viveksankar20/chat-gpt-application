@@ -1,11 +1,19 @@
 "use client"
 
 import { useState } from "react"
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { PlusCircle, MessageSquare, Trash2, Sparkles, Pencil } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { PlusCircle, MessageSquare, Trash2, Sparkles, Pencil, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Chat } from "@/types/chat"
 
@@ -29,6 +37,7 @@ export function ChatSidebar({
   const { data: session } = useSession()
   const [editingChatId, setEditingChatId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState("")
+  const [deleteChatId, setDeleteChatId] = useState<string | null>(null)
 
   const displayName = session?.user?.name?.trim() || session?.user?.email || "Account"
   const displayHint =
@@ -133,7 +142,7 @@ export function ChatSidebar({
                         className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                         onClick={(e) => {
                           e.stopPropagation()
-                          onDeleteChat(chat.id)
+                          setDeleteChatId(chat.id)
                         }}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -163,9 +172,9 @@ export function ChatSidebar({
         </ScrollArea>
       </div>
 
-      <div className="flex-shrink-0 p-4 border-t mt-auto bg-muted/20">
-        <div className="flex items-center space-x-3 px-2 py-1">
-          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs shadow-sm">
+      <div className="flex-shrink-0 p-4 border-t mt-auto bg-muted/20 flex items-center justify-between">
+        <div className="flex items-center space-x-3 px-2 py-1 flex-1 min-w-0">
+          <div className="h-8 w-8 flex-shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs shadow-sm">
             {displayName.slice(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
@@ -175,7 +184,43 @@ export function ChatSidebar({
             </p>
           </div>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+          title="Sign Out"
+        >
+          <LogOut className="h-4 w-4" />
+        </Button>
       </div>
+
+      <Dialog open={!!deleteChatId} onOpenChange={(open) => !open && setDeleteChatId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Chat</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this chat? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setDeleteChatId(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deleteChatId) {
+                  onDeleteChat(deleteChatId)
+                  setDeleteChatId(null)
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

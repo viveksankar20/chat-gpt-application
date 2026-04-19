@@ -3,10 +3,12 @@
 
 declare const process: { env: Record<string, string | undefined> }
 
+import type { ChatMessage } from '../providerRegistry'
+
 export const openRouterService = {
   providerName: 'openrouter' as const,
 
-  async generateResponse(prompt: string, modelId?: string): Promise<string> {
+  async generateResponse(prompt: string, modelId?: string, messages?: ChatMessage[]): Promise<string> {
     console.log('[openrouter.service] generateResponse start model:', modelId)
 
     const apiKey = process.env.OPENROUTER_API_KEY
@@ -18,6 +20,16 @@ export const openRouterService = {
     }
 
     try {
+      const apiMessages = messages && messages.length > 0
+        ? [
+            { role: 'system', content: 'You are a helpful AI assistant. Always format your responses using Markdown.' },
+            ...messages
+          ]
+        : [
+            { role: 'system', content: 'You are a helpful AI assistant. Always format your responses using Markdown. Use headings, bullet points, and code blocks with language tags where appropriate.' },
+            { role: 'user', content: prompt }
+          ]
+
       const response = await fetch('https://api.openrouter.ai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -26,10 +38,7 @@ export const openRouterService = {
         },
         body: JSON.stringify({
           model: model,
-          messages: [
-            { role: 'system', content: 'You are a helpful AI assistant. Always format your responses using Markdown. Use headings, bullet points, and code blocks with language tags where appropriate.' },
-            { role: 'user', content: prompt }
-          ],
+          messages: apiMessages,
           max_tokens: 600,
           temperature: 0.7,
         }),

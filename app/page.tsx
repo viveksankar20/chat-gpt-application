@@ -21,7 +21,7 @@ export default function HomePage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pt-14">
         <div className="text-center max-w-md mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">Welcome to Smart AI Chat</h1>
+          <h1 className="text-3xl font-bold mb-4">Welcome to Nexus AI</h1>
           <p className="text-muted-foreground mb-6">Please sign in to start chatting instantly.</p>
           <div className="space-y-3">
             <a

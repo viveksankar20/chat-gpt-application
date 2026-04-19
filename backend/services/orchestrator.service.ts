@@ -1,10 +1,13 @@
 import { detectIntent, IntentType } from './intent.service'
 import { getCapabilityForIntent, ProviderName } from './modelSelector.service'
-import { providerRegistry, providerOrder } from './providerRegistry'
+import { providerRegistry, providerOrder, type ChatMessage } from './providerRegistry'
 import { modelConfigs, ModelConfig } from './models.config'
 import { CacheService } from './cache.service'
 import { logger } from './logger.service'
 import { PerformanceTracker } from './performance.service'
+
+/** Simple sleep helper for retry back-off */
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 function getModelByCapability(capability: string): ModelConfig | null {
   // Feature 2: Cost Optimization Engine
@@ -21,7 +24,12 @@ function getModelByCapability(capability: string): ModelConfig | null {
   return candidates.length > 0 ? candidates[0] : null
 }
 
-async function invokeProvider(provider: ProviderName, prompt: string, modelId?: string): Promise<{response: string, isCached: boolean, durationMs: number}> {
+async function invokeProvider(
+  provider: ProviderName,
+  prompt: string,
+  modelId?: string,
+  messages?: ChatMessage[]
+): Promise<{response: string, isCached: boolean, durationMs: number}> {
   const service = providerRegistry[provider]
   if (!service) {
     throw new Error(`Orchestrator provider '${provider}' not configured`)
@@ -49,7 +57,7 @@ async function invokeProvider(provider: ProviderName, prompt: string, modelId?: 
     setTimeout(() => reject(new Error(`Provider timeout after ${TIMEOUT_MS}ms`)), TIMEOUT_MS)
   );
 
-  const providerCall = service.generateResponse(prompt, modelId);
+  const providerCall = service.generateResponse(prompt, modelId, messages);
   
   try {
     const result = await Promise.race([providerCall, timeoutPromise]) as string;
@@ -69,7 +77,12 @@ async function invokeProvider(provider: ProviderName, prompt: string, modelId?: 
   }
 }
 
-async function invokeProviderStream(provider: ProviderName, prompt: string, modelId?: string): Promise<{stream: ReadableStream<string>, isCached: boolean, provider: ProviderName, modelId: string}> {
+async function invokeProviderStream(
+  provider: ProviderName,
+  prompt: string,
+  modelId?: string,
+  messages?: ChatMessage[]
+): Promise<{stream: ReadableStream<string>, isCached: boolean, provider: ProviderName, modelId: string}> {
   const service = providerRegistry[provider]
   if (!service) {
     throw new Error(`Orchestrator provider '${provider}' not configured`)
@@ -93,8 +106,8 @@ async function invokeProviderStream(provider: ProviderName, prompt: string, mode
   }
 
   if (!service.generateStream) {
-    // Fallback to non-streaming if provider doesn't support it (should not happen for Groq now)
-    const response = await service.generateResponse(prompt, modelId);
+    // Fallback to non-streaming if provider doesn't support it
+    const response = await service.generateResponse(prompt, modelId, messages);
     const s = new ReadableStream({
       start(controller) {
         controller.enqueue(response);
@@ -104,7 +117,7 @@ async function invokeProviderStream(provider: ProviderName, prompt: string, mode
     return { stream: s, isCached: false, provider, modelId };
   }
 
-  const stream = await service.generateStream(prompt, modelId);
+  const stream = await service.generateStream(prompt, modelId, messages);
   
   // Create a combined stream that also caches the result
   let fullContent = "";
@@ -142,7 +155,14 @@ export interface OrchestratorResult {
   isCached: boolean
 }
 
-export async function orchestrate(prompt: string, modelSelection?: { modelId?: string; mode?: 'smart' | 'advanced' }): Promise<OrchestratorResult> {
+export interface OrchestratorOptions {
+  modelId?: string
+  mode?: 'smart' | 'advanced'
+  /** Structured conversation history for multi-turn context */
+  messages?: ChatMessage[]
+}
+
+export async function orchestrate(prompt: string, options?: OrchestratorOptions): Promise<OrchestratorResult> {
   // Feature 8: API Hardening - Strict Input Validation
   if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
     logger.warn('Invalid prompt received', { promptLength: prompt?.length });
@@ -150,11 +170,12 @@ export async function orchestrate(prompt: string, modelSelection?: { modelId?: s
   }
 
   const intent = detectIntent(prompt)
+  const { modelId: modelIdOpt, messages } = options ?? {}
 
   // Model Selection Logic
   let selectedModel: ModelConfig | null = null
-  if (modelSelection?.modelId) {
-    selectedModel = modelConfigs.find((m) => m.id === modelSelection.modelId && m.freeTier) || null
+  if (modelIdOpt) {
+    selectedModel = modelConfigs.find((m) => m.id === modelIdOpt && m.freeTier) || null
   }
 
   if (!selectedModel) {
@@ -172,9 +193,8 @@ export async function orchestrate(prompt: string, modelSelection?: { modelId?: s
 
   logger.info('Routing request', { intent, selectedModel: modelId, provider: primaryProvider });
 
-  // Feature 4: Retry + Failover
   const attemptProvider = async (provider: ProviderName, modelIdParam: string) => {
-    return await invokeProvider(provider, prompt, modelIdParam);
+    return await invokeProvider(provider, prompt, modelIdParam, messages);
   }
 
   // 1. First attempt with selected model provider
@@ -187,10 +207,11 @@ export async function orchestrate(prompt: string, modelSelection?: { modelId?: s
       ...result
     }
   } catch (primaryError) {
-    logger.warn('Primary attempt failed; retrying once', { provider: primaryProvider, modelId });
+    logger.warn('Primary attempt failed; waiting 1s before retry', { provider: primaryProvider, modelId });
   }
 
-  // 2. Retry once with primary provider
+  // 2. Retry once with primary provider after 1s back-off (Bug fix: was immediate retry before)
+  await sleep(1000)
   try {
     const result = await attemptProvider(primaryProvider, modelId)
     return {
@@ -231,15 +252,20 @@ export async function orchestrate(prompt: string, modelSelection?: { modelId?: s
   throw new Error('[orchestrator] all providers failed, unable to fulfill request')
 }
 
-export async function orchestrateStream(prompt: string, modelSelection?: { modelId?: string; mode?: 'smart' | 'advanced' }): Promise<{stream: ReadableStream<string>, isCached: boolean, provider: ProviderName, modelId: string}> {
+export async function orchestrateStream(
+  prompt: string,
+  options?: OrchestratorOptions
+): Promise<{stream: ReadableStream<string>, isCached: boolean, provider: ProviderName, modelId: string}> {
   if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
     throw new Error('[orchestrator] invalid prompt provided')
   }
 
   const intent = detectIntent(prompt)
+  const { modelId: modelIdOpt, messages } = options ?? {}
+
   let selectedModel: ModelConfig | null = null
-  if (modelSelection?.modelId) {
-    selectedModel = modelConfigs.find((m) => m.id === modelSelection.modelId && m.freeTier) || null
+  if (modelIdOpt) {
+    selectedModel = modelConfigs.find((m) => m.id === modelIdOpt && m.freeTier) || null
   }
 
   if (!selectedModel) {
@@ -255,16 +281,17 @@ export async function orchestrateStream(prompt: string, modelSelection?: { model
   const modelId = selectedModel.id
 
   try {
-    return await invokeProviderStream(primaryProvider, prompt, modelId);
+    return await invokeProviderStream(primaryProvider, modelId, modelId, messages);
   } catch (err) {
     logger.warn('Primary stream attempt failed; attempting fallback', { provider: primaryProvider });
-    // Minimal fallback: try first fallback provider
+    // Minimal fallback: try first fallback provider with 1s delay
+    await sleep(1000)
     const fallbackProviders = getFallbackSequence(primaryProvider);
     for (const fallback of fallbackProviders) {
        const fallbackModel = modelConfigs.find(m => m.provider === fallback && m.freeTier);
        if (fallbackModel) {
           try {
-             return await invokeProviderStream(fallback, prompt, fallbackModel.id);
+             return await invokeProviderStream(fallback, prompt, fallbackModel.id, messages);
           } catch (e) {
              continue;
           }

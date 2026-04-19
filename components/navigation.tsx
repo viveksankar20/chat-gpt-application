@@ -45,7 +45,7 @@ console.log(isOpen)
           <Link href="/" className="flex items-center space-x-2">
             <MessageSquare className="h-6 sm:block hidden w-6 text-primary" />
             {isOpen?<PanelRightClose className="h-6 sm:hidden block  w-6 text-primary" onClick={()=>{toggle()}}/>:<PanelRightOpen className="h-6 sm:hidden block w-6 text-primary" onClick={()=>{toggle()}}/>}
-            <span className="sm:text-xl text-lg font-bold">ChatGPT Clone</span>
+            <span className="sm:text-xl text-lg font-bold">Nexus AI</span>
           </Link>
           <Separator orientation="vertical" className="h-6 hidden sm:flex" />
           <Badge variant="secondary" className="text-xs hidden sm:flex">
@@ -123,42 +123,40 @@ console.log(isOpen)
       {/* Mobile Dropdown */}
       {isOpens && (
         <div className="sm:hidden border-t bg-background p-4 space-y-3">
-          <Link href="/groq-tester">
-            <Button variant="outline" className="w-full flex items-center space-x-2">
-              <TestTube className="h-4 w-4" />
-              <span>GROQ Tester</span>
-            </Button>
-          </Link>
+          <Button variant="outline" className="w-full flex items-center justify-start space-x-2 h-12" asChild>
+            <Link href="/groq-tester">
+              <TestTube className="h-5 w-5" />
+              <span className="text-base">GROQ Tester</span>
+            </Link>
+          </Button>
 
           {session ? (
             <>
-           
-
               <Button
                 onClick={handleSignOut}
                 variant="destructive"
-                className="w-full flex items-center space-x-2"
+                className="w-full flex items-center justify-start space-x-2 h-12"
               >
-                <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
+                <LogOut className="h-5 w-5" />
+                <span className="text-base">Sign Out</span>
               </Button>
             </>
           ) : (
-            <>
-              <Link href="/auth/signin">
-                <Button variant="outline" className="w-full flex items-center space-x-2">
-                  <LogIn className="h-4 w-4" />
-                  <span>Sign In</span>
-                </Button>
-              </Link>
+            <div className="flex flex-col space-y-3 pt-2">
+              <Button variant="outline" className="w-full flex items-center justify-start space-x-2 h-12" asChild>
+                <Link href="/auth/signin">
+                  <LogIn className="h-5 w-5" />
+                  <span className="text-base">Sign In</span>
+                </Link>
+              </Button>
 
-              <Link href="/auth/signup">
-                <Button className="w-full flex items-center space-x-2">
-                  <UserPlus className="h-4 w-4" />
-                  <span>Sign Up</span>
-                </Button>
-              </Link>
-            </>
+              <Button className="w-full flex items-center justify-start space-x-2 h-12" asChild>
+                <Link href="/auth/signup">
+                  <UserPlus className="h-5 w-5" />
+                  <span className="text-base">Sign Up</span>
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
       )}
